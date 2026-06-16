@@ -15,6 +15,21 @@ report() {
 
 echo "=== verstak-sdk test ==="
 
+# ── Dependency checks ──
+if ! command -v node &>/dev/null; then
+  echo "  ❌ node: not found"
+  FAILED=1
+fi
+if ! command -v npm &>/dev/null; then
+  echo "  ❌ npm: not found"
+  FAILED=1
+fi
+if [ "$FAILED" -ne 0 ]; then
+  echo ""
+  echo "❌ tests failed — missing core dependencies"
+  exit 1
+fi
+
 # Install deps if missing
 if [ ! -d "$ROOT/node_modules" ]; then
   if [ -f "$ROOT/package-lock.json" ]; then

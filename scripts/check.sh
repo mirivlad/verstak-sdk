@@ -15,6 +15,16 @@ report() {
 
 echo "=== verstak-sdk check ==="
 
+# ── Dependency checks ──
+if ! command -v node &>/dev/null; then
+  echo "  ❌ node: not found"
+  FAILED=1
+fi
+if ! command -v npm &>/dev/null; then
+  echo "  ❌ npm: not found"
+  FAILED=1
+fi
+
 # Validate that all JSON schemas are valid JSON
 echo "[schema validation]"
 if command -v python3 &>/dev/null; then
@@ -48,17 +58,20 @@ else
 fi
 
 # TypeScript check (noEmit)
-if [ ! -d "$ROOT/node_modules" ]; then
-  if [ -f "$ROOT/package-lock.json" ]; then
-    (cd "$ROOT" && npm ci --no-audit --no-fund)
-    report "npm ci" $?
-  else
-    (cd "$ROOT" && npm install --no-audit --no-fund)
-    report "npm install" $?
+echo "[typescript]"
+if [ "$FAILED" -eq 0 ]; then
+  if [ ! -d "$ROOT/node_modules" ]; then
+    if [ -f "$ROOT/package-lock.json" ]; then
+      (cd "$ROOT" && npm ci --no-audit --no-fund)
+      report "npm ci" $?
+    else
+      (cd "$ROOT" && npm install --no-audit --no-fund)
+      report "npm install" $?
+    fi
   fi
+  (cd "$ROOT" && npx tsc --noEmit)
+  report "tsc --noEmit" $?
 fi
-(cd "$ROOT" && npx tsc --noEmit)
-report "tsc --noEmit" $?
 
 echo ""
 if [ "$FAILED" -eq 0 ]; then
