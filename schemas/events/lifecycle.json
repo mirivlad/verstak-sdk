@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://git.mirv.top/verstak/verstak-sdk/schemas/events/lifecycle.json",
+  "title": "Verstak Lifecycle Events",
+  "description": "Event schemas for plugin and application lifecycle events",
+  "type": "object",
+  "properties": {
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/LifecycleEvent"
+      }
+    }
+  },
+  "$defs": {
+    "LifecycleEvent": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "schema": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "const": "object" },
+            "properties": { "type": "object" },
+            "required": { "type": "array", "items": { "type": "string" } }
+          },
+          "required": ["type", "properties", "required"]
+        }
+      },
+      "required": ["name", "description", "schema"]
+    }
+  },
+  "events": [
+    {
+      "name": "plugin.enabled",
+      "description": "A plugin has been enabled",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "pluginId": { "type": "string", "description": "Plugin identifier" },
+          "version": { "type": "string", "description": "Plugin version" },
+          "enabledAt": { "type": "string", "description": "ISO 8601 timestamp" }
+        },
+        "required": ["pluginId", "enabledAt"]
+      }
+    },
+    {
+      "name": "plugin.disabled",
+      "description": "A plugin has been disabled",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "pluginId": { "type": "string", "description": "Plugin identifier" },
+          "disabledAt": { "type": "string", "description": "ISO 8601 timestamp" }
+        },
+        "required": ["pluginId", "disabledAt"]
+      }
+    },
+    {
+      "name": "plugin.failed",
+      "description": "A plugin has failed to load or run",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "pluginId": { "type": "string", "description": "Plugin identifier" },
+          "error": { "type": "string", "description": "Error message" },
+          "phase": {
+            "type": "string",
+            "description": "Lifecycle phase where failure occurred",
+            "enum": ["discovery", "validation", "dependency", "permissions", "sidecar", "frontend", "registration", "runtime"]
+          },
+          "failedAt": { "type": "string", "description": "ISO 8601 timestamp" }
+        },
+        "required": ["pluginId", "error", "phase", "failedAt"]
+      }
+    },
+    {
+      "name": "plugin.installed",
+      "description": "A new plugin has been installed",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "pluginId": { "type": "string" },
+          "version": { "type": "string" },
+          "source": { "type": "string", "enum": ["official", "local", "third-party"] },
+          "installedAt": { "type": "string" }
+        },
+        "required": ["pluginId", "version", "source", "installedAt"]
+      }
+    },
+    {
+      "name": "plugin.uninstalled",
+      "description": "A plugin has been uninstalled",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "pluginId": { "type": "string" },
+          "preserveData": { "type": "boolean", "description": "Whether user chose to keep data" },
+          "uninstalledAt": { "type": "string" }
+        },
+        "required": ["pluginId", "uninstalledAt"]
+      }
+    },
+    {
+      "name": "app.started",
+      "description": "Application has started",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "version": { "type": "string", "description": "Application version" },
+          "startedAt": { "type": "string", "description": "ISO 8601 timestamp" },
+          "pluginsLoaded": { "type": "integer", "description": "Number of plugins loaded" },
+          "pluginsFailed": { "type": "integer", "description": "Number of plugins failed" }
+        },
+        "required": ["version", "startedAt"]
+      }
+    },
+    {
+      "name": "app.shuttingdown",
+      "description": "Application is shutting down",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "shutdownAt": { "type": "string", "description": "ISO 8601 timestamp" },
+          "reason": { "type": "string", "description": "Shutdown reason" }
+        },
+        "required": ["shutdownAt"]
+      }
+    },
+    {
+      "name": "capability.changed",
+      "description": "Available capabilities have changed (plugin enabled/disabled)",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "added": { "type": "array", "items": { "type": "string" }, "description": "Capabilities that became available" },
+          "removed": { "type": "array", "items": { "type": "string" }, "description": "Capabilities that were removed" },
+          "changedAt": { "type": "string", "description": "ISO 8601 timestamp" }
+        },
+        "required": ["changedAt"]
+      }
+    }
+  ]
+}

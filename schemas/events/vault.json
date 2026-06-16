@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://git.mirv.top/verstak/verstak-sdk/schemas/events/vault.json",
+  "title": "Verstak Vault Events",
+  "description": "Event schemas for vault and case lifecycle events",
+  "type": "object",
+  "properties": {
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/VaultEvent"
+      }
+    }
+  },
+  "$defs": {
+    "VaultEvent": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "schema": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "const": "object" },
+            "properties": { "type": "object" },
+            "required": { "type": "array", "items": { "type": "string" } }
+          },
+          "required": ["type", "properties", "required"]
+        }
+      },
+      "required": ["name", "description", "schema"]
+    }
+  },
+  "events": [
+    {
+      "name": "vault.opened",
+      "description": "Vault has been opened and is ready",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string", "description": "Absolute path to vault root" },
+          "version": { "type": "string", "description": "Vault schema version" },
+          "openedAt": { "type": "string", "description": "ISO 8601 timestamp" }
+        },
+        "required": ["path", "openedAt"]
+      }
+    },
+    {
+      "name": "vault.closed",
+      "description": "Vault is about to close",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "closedAt": { "type": "string", "description": "ISO 8601 timestamp" },
+          "clean": { "type": "boolean", "description": "Whether vault closed cleanly" }
+        },
+        "required": ["closedAt"]
+      }
+    },
+    {
+      "name": "case.selected",
+      "description": "A case has been selected in the navigation",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "caseId": { "type": "string", "description": "Case identifier" },
+          "casePath": { "type": "string", "description": "Case filesystem path" },
+          "caseType": { "type": "string", "description": "Case type (client, project, etc.)" },
+          "selectedAt": { "type": "string", "description": "ISO 8601 timestamp" }
+        },
+        "required": ["caseId", "casePath"]
+      }
+    },
+    {
+      "name": "file.added",
+      "description": "A file has been added to the vault",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string", "description": "File path relative to vault" },
+          "size": { "type": "integer", "description": "File size in bytes" },
+          "mimeType": { "type": "string", "description": "File MIME type" },
+          "caseId": { "type": "string", "description": "Associated case identifier" },
+          "addedAt": { "type": "string", "description": "ISO 8601 timestamp" }
+        },
+        "required": ["path", "addedAt"]
+      }
+    },
+    {
+      "name": "file.changed",
+      "description": "A file in the vault has been modified",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string", "description": "File path relative to vault" },
+          "size": { "type": "integer", "description": "New file size" },
+          "changedAt": { "type": "string", "description": "ISO 8601 timestamp" }
+        },
+        "required": ["path", "changedAt"]
+      }
+    },
+    {
+      "name": "file.deleted",
+      "description": "A file has been deleted from the vault",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string", "description": "File path relative to vault" },
+          "deletedAt": { "type": "string", "description": "ISO 8601 timestamp" }
+        },
+        "required": ["path", "deletedAt"]
+      }
+    },
+    {
+      "name": "note.saved",
+      "description": "A note has been saved",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "noteId": { "type": "string", "description": "Note identifier" },
+          "title": { "type": "string", "description": "Note title" },
+          "path": { "type": "string", "description": "Note file path relative to vault" },
+          "caseId": { "type": "string", "description": "Associated case identifier" },
+          "savedAt": { "type": "string", "description": "ISO 8601 timestamp" }
+        },
+        "required": ["noteId", "path", "savedAt"]
+      }
+    },
+    {
+      "name": "activity.recorded",
+      "description": "An activity event has been recorded",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "description": "Activity type (file.opened, note.saved, etc.)" },
+          "caseId": { "type": "string", "description": "Associated case" },
+          "details": { "type": "object", "description": "Activity-specific details" },
+          "recordedAt": { "type": "string", "description": "ISO 8601 timestamp" }
+        },
+        "required": ["type", "recordedAt"]
+      }
+    },
+    {
+      "name": "case.created",
+      "description": "A new case has been created",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "caseId": { "type": "string" },
+          "casePath": { "type": "string" },
+          "caseType": { "type": "string" },
+          "template": { "type": "string", "description": "Template used, if any" },
+          "createdAt": { "type": "string" }
+        },
+        "required": ["caseId", "casePath", "createdAt"]
+      }
+    }
+  ]
+}

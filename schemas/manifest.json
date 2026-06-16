@@ -1,0 +1,362 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://git.mirv.top/verstak/verstak-sdk/schemas/manifest.json",
+  "title": "Verstak Plugin Manifest",
+  "description": "Schema for Verstak plugin.json manifest files",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "version",
+    "apiVersion",
+    "provides",
+    "permissions"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "description": "Schema version for the manifest format",
+      "enum": [1]
+    },
+    "id": {
+      "type": "string",
+      "description": "Unique plugin identifier (e.g. 'official.notes')",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9.-]*$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable plugin name"
+    },
+    "version": {
+      "type": "string",
+      "description": "Plugin semantic version",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.]+)?$"
+    },
+    "apiVersion": {
+      "type": "string",
+      "description": "Verstak Platform API version this plugin targets",
+      "pattern": "^\\d+$"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of the plugin's purpose"
+    },
+    "source": {
+      "type": "string",
+      "description": "Plugin source classification",
+      "enum": ["official", "local", "third-party"]
+    },
+    "icon": {
+      "type": "string",
+      "description": "Path to plugin icon (relative to plugin root)"
+    },
+    "provides": {
+      "type": "array",
+      "description": "Capabilities this plugin provides",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "requires": {
+      "type": "array",
+      "description": "Required capabilities — plugin cannot load without these",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "optionalRequires": {
+      "type": "array",
+      "description": "Optional capabilities — plugin degrades gracefully without these",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "permissions": {
+      "type": "array",
+      "description": "Runtime permissions requested by the plugin",
+      "items": {
+        "type": "string",
+        "enum": [
+          "vault.read",
+          "vault.write",
+          "vault.watch",
+          "storage.namespace",
+          "storage.migrations",
+          "events.publish",
+          "events.subscribe",
+          "ui.register",
+          "commands.register",
+          "network.local",
+          "network.remote",
+          "process.spawn",
+          "secrets.read",
+          "secrets.write",
+          "sync.participate"
+        ]
+      },
+      "minItems": 1
+    },
+    "frontend": {
+      "type": "object",
+      "description": "Frontend bundle configuration",
+      "properties": {
+        "entry": {
+          "type": "string",
+          "description": "Path to the frontend entry JavaScript file"
+        },
+        "style": {
+          "type": "string",
+          "description": "Path to the frontend stylesheet"
+        }
+      },
+      "required": ["entry"]
+    },
+    "backend": {
+      "type": "object",
+      "description": "Backend sidecar configuration",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["sidecar"],
+          "description": "Backend type (only 'sidecar' supported)"
+        },
+        "entry": {
+          "type": "object",
+          "description": "Platform-specific binaries",
+          "patternProperties": {
+            "^(linux|windows|darwin)-(amd64|arm64)$": {
+              "type": "string",
+              "description": "Path to the binary for this platform"
+            }
+          },
+          "minProperties": 1
+        },
+        "healthCheck": {
+          "type": "object",
+          "description": "Sidecar health check configuration",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["rpc", "stdio", "tcp"],
+              "default": "rpc"
+            },
+            "timeout": {
+              "type": "integer",
+              "description": "Health check timeout in milliseconds",
+              "default": 5000
+            }
+          }
+        }
+      },
+      "required": ["type", "entry"]
+    },
+    "migrations": {
+      "type": "object",
+      "description": "Database migration configuration",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path to migrations directory"
+        }
+      }
+    },
+    "contributes": {
+      "type": "object",
+      "description": "UI and action contributions",
+      "properties": {
+        "views": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContributionView"
+          }
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContributionCommand"
+          }
+        },
+        "settingsPanels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContributionSettingsPanel"
+          }
+        },
+        "sidebarItems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContributionSidebarItem"
+          }
+        },
+        "fileActions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContributionAction"
+          }
+        },
+        "noteActions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContributionAction"
+          }
+        },
+        "contextMenuEntries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContributionContextMenuEntry"
+          }
+        },
+        "searchProviders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContributionSearchProvider"
+          }
+        },
+        "activityProviders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContributionActivityProvider"
+          }
+        },
+        "statusBarItems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContributionStatusBarItem"
+          }
+        }
+      }
+    },
+    "sync": {
+      "type": "object",
+      "description": "Sync configuration — what data this plugin allows syncing",
+      "properties": {
+        "namespaces": {
+          "type": "array",
+          "description": "Storage namespaces allowed for sync",
+          "items": {
+            "type": "string"
+          }
+        },
+        "participate": {
+          "type": "boolean",
+          "description": "Whether this plugin participates in sync at all",
+          "default": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "ContributionView": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "icon": { "type": "string" },
+        "component": { "type": "string" }
+      },
+      "required": ["id", "component"]
+    },
+    "ContributionCommand": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "keybinding": { "type": "string" },
+        "icon": { "type": "string" },
+        "handler": { "type": "string" }
+      },
+      "required": ["id", "title"]
+    },
+    "ContributionSettingsPanel": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "component": { "type": "string" },
+        "icon": { "type": "string" }
+      },
+      "required": ["id", "title", "component"]
+    },
+    "ContributionSidebarItem": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "icon": { "type": "string" },
+        "view": { "type": "string" },
+        "position": {
+          "type": "integer",
+          "description": "Sort order (lower = higher)"
+        }
+      },
+      "required": ["id", "title", "view"]
+    },
+    "ContributionAction": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "icon": { "type": "string" },
+        "capability": {
+          "type": "string",
+          "description": "Required capability for this action to appear"
+        },
+        "handler": { "type": "string" }
+      },
+      "required": ["id", "label"]
+    },
+    "ContributionContextMenuEntry": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "context": {
+          "type": "string",
+          "enum": ["file", "note", "case", "folder"]
+        },
+        "group": { "type": "string" },
+        "capability": { "type": "string" },
+        "handler": { "type": "string" }
+      },
+      "required": ["id", "label", "context"]
+    },
+    "ContributionSearchProvider": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "handler": { "type": "string" }
+      },
+      "required": ["id", "label", "handler"]
+    },
+    "ContributionActivityProvider": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "events": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "handler": { "type": "string" }
+      },
+      "required": ["id", "handler"]
+    },
+    "ContributionStatusBarItem": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "position": {
+          "type": "string",
+          "enum": ["left", "right"]
+        },
+        "handler": { "type": "string" }
+      },
+      "required": ["id", "label"]
+    }
+  }
+}

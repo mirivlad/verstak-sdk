@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://git.mirv.top/verstak/verstak-sdk/schemas/capabilities.json",
+  "title": "Verstak Capability Registry",
+  "description": "Known capability names and their descriptions for the Verstak platform",
+  "type": "object",
+  "properties": {
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/CapabilityEntry"
+      }
+    }
+  },
+  "$defs": {
+    "CapabilityEntry": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["stable", "draft", "deprecated"]
+        }
+      },
+      "required": ["name", "description", "status"]
+    }
+  },
+  "capabilities": [
+    { "name": "editor.text", "description": "Text editing capability (any format)", "status": "draft" },
+    { "name": "editor.text.markdown", "description": "Markdown text editing", "status": "draft" },
+    { "name": "editor.note.markdown", "description": "Markdown note editing (extends editor.text.markdown with note metadata)", "status": "draft" },
+    { "name": "viewer.file", "description": "File viewer (any type)", "status": "draft" },
+    { "name": "viewer.image", "description": "Image viewer", "status": "draft" },
+    { "name": "viewer.text", "description": "Text file viewer", "status": "draft" },
+    { "name": "viewer.markdown", "description": "Markdown rendered viewer", "status": "draft" },
+    { "name": "preview.markdown", "description": "Markdown preview panel", "status": "draft" },
+    { "name": "preview.file", "description": "File preview panel", "status": "draft" },
+    { "name": "workspace.files", "description": "File workspace management", "status": "draft" },
+    { "name": "workspace.notes", "description": "Note workspace management", "status": "draft" },
+    { "name": "vault.files", "description": "Low-level vault file read/write access", "status": "draft" },
+    { "name": "entity.file", "description": "File entity type support", "status": "draft" },
+    { "name": "entity.note", "description": "Note entity type support", "status": "draft" },
+    { "name": "note.registry", "description": "Note metadata registry", "status": "draft" },
+    { "name": "file.browser", "description": "File browser tree/list UI", "status": "draft" },
+    { "name": "activity.log", "description": "Activity event logging", "status": "draft" },
+    { "name": "activity.provider", "description": "Activity event provider", "status": "draft" },
+    { "name": "activity.reconstruction", "description": "Activity reconstruction from events", "status": "draft" },
+    { "name": "worklog", "description": "Worklog/journal entry capability", "status": "draft" },
+    { "name": "journal", "description": "Journal UI capability", "status": "draft" },
+    { "name": "report.worklog", "description": "Worklog report generation", "status": "draft" },
+    { "name": "capture.browser", "description": "Browser capture receiver", "status": "draft" },
+    { "name": "browser.inbox", "description": "Browser inbox UI capability", "status": "draft" },
+    { "name": "domain.binding", "description": "Domain-to-case binding", "status": "draft" },
+    { "name": "search", "description": "Full-text search capability", "status": "draft" },
+    { "name": "search.provider", "description": "Search result provider", "status": "draft" },
+    { "name": "search.indexer", "description": "Search indexer service", "status": "draft" },
+    { "name": "secret-store", "description": "Encrypted secret storage", "status": "draft" },
+    { "name": "secrets.read-ui", "description": "Secret read user interface", "status": "draft" },
+    { "name": "secrets.write-ui", "description": "Secret write user interface", "status": "draft" },
+    { "name": "case.templates", "description": "Case template provider", "status": "draft" },
+    { "name": "link.resolver", "description": "Internal link resolver (verstak://)", "status": "draft" },
+    { "name": "importer", "description": "Data import capability", "status": "draft" },
+    { "name": "exporter", "description": "Data export capability", "status": "draft" }
+  ]
+}

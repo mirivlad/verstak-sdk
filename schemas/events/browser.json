@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://git.mirv.top/verstak/verstak-sdk/schemas/events/browser.json",
+  "title": "Verstak Browser Events",
+  "description": "Event schemas for browser extension and browser-inbox plugin communication",
+  "type": "object",
+  "properties": {
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/BrowserEvent"
+      }
+    }
+  },
+  "$defs": {
+    "BrowserEvent": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "schema": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "const": "object" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": {
+                "oneOf": [
+                  { "type": "string" },
+                  { "type": "integer" },
+                  { "type": "boolean" },
+                  { "type": "array" },
+                  { "type": "object" }
+                ]
+              }
+            },
+            "required": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "required": ["type", "properties", "required"]
+        }
+      },
+      "required": ["name", "description", "schema"]
+    }
+  },
+  "events": [
+    {
+      "name": "browser.capture.page",
+      "description": "Full page capture sent from browser extension",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "url": { "type": "string", "description": "Page URL" },
+          "title": { "type": "string", "description": "Page title" },
+          "html": { "type": "string", "description": "Page HTML content" },
+          "text": { "type": "string", "description": "Page text content" },
+          "capturedAt": { "type": "string", "description": "ISO 8601 timestamp" },
+          "domain": { "type": "string", "description": "Extracted domain" }
+        },
+        "required": ["url", "title", "capturedAt"]
+      }
+    },
+    {
+      "name": "browser.capture.selection",
+      "description": "Selected text sent from browser extension",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "url": { "type": "string", "description": "Source page URL" },
+          "title": { "type": "string", "description": "Source page title" },
+          "text": { "type": "string", "description": "Selected text content" },
+          "capturedAt": { "type": "string", "description": "ISO 8601 timestamp" },
+          "domain": { "type": "string", "description": "Extracted domain" }
+        },
+        "required": ["url", "title", "text", "capturedAt"]
+      }
+    },
+    {
+      "name": "browser.capture.link",
+      "description": "Link sent from browser extension",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "url": { "type": "string", "description": "Link URL" },
+          "title": { "type": "string", "description": "Link text/title" },
+          "capturedAt": { "type": "string", "description": "ISO 8601 timestamp" },
+          "domain": { "type": "string", "description": "Extracted domain" }
+        },
+        "required": ["url", "capturedAt"]
+      }
+    },
+    {
+      "name": "browser.desktop.status",
+      "description": "Desktop status response to browser extension ping",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "online": { "type": "boolean", "description": "Whether desktop is reachable" },
+          "version": { "type": "string", "description": "Desktop version" },
+          "checkedAt": { "type": "string", "description": "ISO 8601 timestamp" }
+        },
+        "required": ["online", "checkedAt"]
+      }
+    },
+    {
+      "name": "browser.pending.flush",
+      "description": "Flush pending captures from browser queue to desktop",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "enum": ["page", "selection", "link"] },
+                "payload": { "type": "object" },
+                "queuedAt": { "type": "string" }
+              },
+              "required": ["type", "payload"]
+            }
+          },
+          "flushedAt": { "type": "string", "description": "ISO 8601 timestamp" }
+        },
+        "required": ["items", "flushedAt"]
+      }
+    }
+  ]
+}

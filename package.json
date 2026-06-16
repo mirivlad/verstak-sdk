@@ -1,0 +1,21 @@
+{
+  "name": "@verstak/plugin-sdk",
+  "version": "0.1.0",
+  "description": "Verstak Plugin SDK — TypeScript types and runtime API for plugin development",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/",
+    "schemas/"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "lint": "tsc --noEmit",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}
