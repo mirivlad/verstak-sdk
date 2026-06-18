@@ -1,79 +1,71 @@
-import type { PluginSettings } from './types';
-/**
- * VerstakPluginAPI — единственный способ для frontend плагина
- * общаться с core платформы.
- *
- * Экземпляр API передаётся плагину при активации через глобальную
- * переменную `window.__VERSTAK_PLUGIN_API__`.
- */
-export declare class VerstakPluginAPI {
-    private pluginId;
-    private capabilities;
-    constructor(pluginId: string);
-    /**
-     * Инициализация API — вызывается core после загрузки frontend bundle.
-     * @internal
-     */
-    _init(capabilities: string[]): void;
-    /**
-     * Зарегистрировать view для отображения в UI Shell.
-     */
-    registerView(id: string, component: unknown): void;
-    /**
-     * Зарегистрировать панель настроек плагина.
-     */
-    registerSettingsPanel(id: string, title: string, component: unknown): void;
-    /**
-     * Зарегистрировать команду для command palette.
-     */
-    registerCommand(id: string, title: string, handler: () => void, keybinding?: string): void;
-    /**
-     * Зарегистрировать действия для файлов.
-     */
-    registerFileAction(id: string, label: string, handler: (filePath: string) => void, capability?: string): void;
-    /**
-     * Зарегистрировать действия для заметок.
-     */
-    registerNoteAction(id: string, label: string, handler: (noteId: string) => void, capability?: string): void;
-    /**
-     * Зарегистрировать provider поиска.
-     */
-    registerSearchProvider(id: string, label: string, handler: (query: string) => unknown[]): void;
-    /**
-     * Проверить, доступна ли capability.
-     */
-    hasCapability(name: string): boolean;
-    /**
-     * Получить список всех доступных capabilities.
-     */
-    getAvailableCapabilities(): string[];
-    /**
-     * Вызвать backend метод плагина через RPC.
-     */
-    callBackend(method: string, args?: unknown[]): Promise<unknown>;
-    /**
-     * Прочитать настройки плагина.
-     */
-    readSettings(): Promise<PluginSettings>;
-    /**
-     * Записать настройки плагина.
-     */
-    writeSettings(settings: PluginSettings): Promise<void>;
-    /**
-     * Подписаться на событие event bus.
-     */
-    subscribe(event: string, handler: (payload: unknown) => void): void;
-    /**
-     * Опубликовать событие в event bus.
-     */
-    publish(event: string, payload: unknown): void;
-    private _postMessage;
-    private _rpcCall;
+import type { CapabilityEntry, FileEntry, FileMetadata, MovePathOptions, OpenResourceRequest, OpenResourceResult, PluginSettings, TrashResult, WriteTextOptions } from './types';
+export type PluginCommandArgs = Record<string, unknown>;
+export type PluginCommandHandler = (args: PluginCommandArgs, declaration: PluginCommandDeclaration) => unknown | Promise<unknown>;
+export type Unsubscribe = () => void;
+export interface PluginCommandDeclaration {
+    status: 'declared';
+    pluginId: string;
+    commandId: string;
+    handler?: string;
+    args?: PluginCommandArgs;
 }
-/**
- * Создать экземпляр VerstakPluginAPI.
- * Core вызывает эту функцию после загрузки frontend bundle,
- * передавая pluginId и список доступных capabilities.
- */
-export declare function createPluginAPI(pluginId: string): VerstakPluginAPI;
+export interface PluginCommandResult {
+    status: 'handled';
+    pluginId: string;
+    commandId: string;
+    result: unknown;
+}
+export interface PluginEvent<TPayload = Record<string, unknown>> {
+    name: string;
+    pluginId: string;
+    payload: TPayload;
+    timestamp: string;
+}
+export interface VerstakPluginAPI {
+    readonly pluginId: string;
+    settings: {
+        read(): Promise<PluginSettings>;
+        read<T = unknown>(key: string): Promise<T | undefined>;
+        write(key: string, value: unknown): Promise<PluginSettings>;
+        writeAll(settings: PluginSettings): Promise<void>;
+    };
+    capabilities: {
+        has(capability: string): Promise<boolean>;
+        get(capability: string): Promise<{
+            available: boolean;
+            name?: string;
+            pluginId?: string;
+            status?: string;
+        }>;
+        list(): Promise<CapabilityEntry[]>;
+    };
+    commands: {
+        register(commandId: string, handler: PluginCommandHandler): Promise<Unsubscribe>;
+        execute(commandId: string, args?: PluginCommandArgs): Promise<PluginCommandResult>;
+    };
+    events: {
+        publish(eventName: string, payload?: Record<string, unknown>): Promise<void>;
+        subscribe<TPayload = Record<string, unknown>>(eventName: string, handler: (event: PluginEvent<TPayload>) => void): Promise<Unsubscribe>;
+    };
+    files: {
+        /**
+         * Files API uses canonical vault-relative slash paths. Backslashes,
+         * Windows/UNC absolute paths, traversal, null bytes, `.verstak` variants,
+         * and symlink read/write/move/trash operations are rejected by the host.
+         */
+        list(relativeDir?: string): Promise<FileEntry[]>;
+        metadata(relativePath: string): Promise<FileMetadata>;
+        readText(relativePath: string): Promise<string>;
+        writeText(relativePath: string, content: string, options?: WriteTextOptions): Promise<void>;
+        createFolder(relativePath: string): Promise<void>;
+        move(fromRelativePath: string, toRelativePath: string, options?: MovePathOptions): Promise<void>;
+        trash(relativePath: string): Promise<TrashResult>;
+    };
+    workbench: {
+        openResource(request: OpenResourceRequest): Promise<OpenResourceResult>;
+        editResource(request: OpenResourceRequest): Promise<OpenResourceResult>;
+    };
+    dispose?: () => void;
+}
+export declare function createPluginAPI(_pluginId: string): VerstakPluginAPI;
 //# sourceMappingURL=plugin-api.d.ts.map

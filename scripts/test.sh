@@ -41,18 +41,9 @@ if [ ! -d "$ROOT/node_modules" ]; then
   fi
 fi
 
-# Run vitest tests
-if grep -q '"test"' "$ROOT/package.json" 2>/dev/null; then
-  OUTPUT=$(cd "$ROOT" && npm test 2>&1) || true
-  if echo "$OUTPUT" | grep -q "No test files found"; then
-    echo "  ℹ️  vitest: no test files yet"
-  else
-    echo "$OUTPUT"
-    report "vitest" ${PIPESTATUS[0]}
-  fi
-else
-  echo "  ℹ️  no test script in package.json"
-fi
+# Run vitest tests. The SDK has contract tests; "no test files" is a failure.
+(cd "$ROOT" && npm test)
+report "vitest" $?
 
 echo ""
 if [ "$FAILED" -eq 0 ]; then

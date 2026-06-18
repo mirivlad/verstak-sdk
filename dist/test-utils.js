@@ -34,15 +34,202 @@ export function createTestPluginState(overrides) {
 /**
  * Создать заглушку VerstakPluginAPI для тестов.
  */
-export function createMockPluginAPI() {
+export function createMockPluginAPI(pluginId = 'test.plugin') {
+    const settings = {};
+    const commands = new Map();
+    const eventHandlers = new Map();
+    const files = new Map();
+    files.set('', { type: 'folder', modifiedAt: new Date().toISOString() });
+    function normalizePath(path, allowRoot = false) {
+        const raw = String(path || '');
+        if (raw.includes('\0'))
+            throw new Error('invalid-path: null-byte');
+        if (raw.includes('\\'))
+            throw new Error('invalid-path: backslash not allowed');
+        const normalized = raw.replace(/^\.\//, '');
+        const parts = normalized.split('/').filter(Boolean);
+        if (!allowRoot && parts.length === 0)
+            throw new Error('invalid-path: empty path');
+        if (normalized.startsWith('/') || /^[A-Za-z]:/.test(normalized))
+            throw new Error('invalid-path: absolute path rejected');
+        if (parts.includes('..'))
+            throw new Error('invalid-path: path-traversal');
+        if (parts[0] && parts[0].toLowerCase() === '.verstak')
+            throw new Error('reserved-path: .verstak is internal');
+        return parts.join('/');
+    }
+    function parentPath(path) {
+        const idx = path.lastIndexOf('/');
+        return idx === -1 ? '' : path.slice(0, idx);
+    }
+    function baseName(path) {
+        const idx = path.lastIndexOf('/');
+        return idx === -1 ? path : path.slice(idx + 1);
+    }
+    function entry(path, node) {
+        const name = baseName(path);
+        const dot = name.lastIndexOf('.');
+        const extension = dot > 0 ? name.slice(dot + 1) : '';
+        return {
+            name,
+            relativePath: path,
+            type: node.type,
+            size: node.type === 'file' ? (node.content || '').length : 0,
+            modifiedAt: node.modifiedAt,
+            extension,
+            isHidden: name.startsWith('.'),
+            isReserved: false,
+            canRead: true,
+            canWrite: true,
+        };
+    }
     return {
-        registerView: vi.fn(),
-        registerCommand: vi.fn(),
-        registerSettingsPanel: vi.fn(),
-        hasCapability: vi.fn().mockReturnValue(false),
-        callBackend: vi.fn().mockResolvedValue(undefined),
-        subscribe: vi.fn(),
-        publish: vi.fn(),
+        pluginId,
+        settings: {
+            read: vi.fn(async (key) => key ? settings[key] : { ...settings }),
+            write: vi.fn(async (key, value) => {
+                settings[key] = value;
+                return { ...settings };
+            }),
+            writeAll: vi.fn(async (nextSettings) => {
+                Object.keys(settings).forEach((key) => delete settings[key]);
+                Object.assign(settings, nextSettings);
+            }),
+        },
+        capabilities: {
+            has: vi.fn(async () => false),
+            get: vi.fn(async (name) => ({ available: false, name })),
+            list: vi.fn(async () => []),
+        },
+        commands: {
+            register: vi.fn(async (commandId, handler) => {
+                commands.set(commandId, handler);
+                return () => { commands.delete(commandId); };
+            }),
+            execute: vi.fn(async (commandId, args = {}) => {
+                const handler = commands.get(commandId);
+                if (!handler) {
+                    throw new Error(`declared-but-unhandled: ${commandId}`);
+                }
+                return { status: 'handled', pluginId, commandId, result: await handler(args) };
+            }),
+        },
+        events: {
+            publish: vi.fn(async (eventName, payload = {}) => {
+                const event = { name: eventName, pluginId, payload, timestamp: new Date().toISOString() };
+                (eventHandlers.get(eventName) || []).slice().forEach((handler) => handler(event));
+            }),
+            subscribe: vi.fn(async (eventName, handler) => {
+                const handlers = eventHandlers.get(eventName) || [];
+                handlers.push(handler);
+                eventHandlers.set(eventName, handlers);
+                return () => {
+                    eventHandlers.set(eventName, (eventHandlers.get(eventName) || []).filter((item) => item !== handler));
+                };
+            }),
+        },
+        files: {
+            list: vi.fn(async (relativeDir = '') => {
+                const dir = normalizePath(relativeDir, true);
+                const node = files.get(dir);
+                if (!node || node.type !== 'folder')
+                    throw new Error(`not-found: ${dir}`);
+                const prefix = dir ? `${dir}/` : '';
+                return Array.from(files.entries())
+                    .filter(([path]) => path !== dir && path.startsWith(prefix) && !path.slice(prefix.length).includes('/'))
+                    .map(([path, node]) => entry(path, node));
+            }),
+            metadata: vi.fn(async (relativePath) => {
+                const path = normalizePath(relativePath);
+                const node = files.get(path);
+                if (!node)
+                    throw new Error(`not-found: ${path}`);
+                return { ...entry(path, node), mimeHint: '', isText: node.type === 'file' };
+            }),
+            readText: vi.fn(async (relativePath) => {
+                const path = normalizePath(relativePath);
+                const node = files.get(path);
+                if (!node)
+                    throw new Error(`not-found: ${path}`);
+                if (node.type !== 'file')
+                    throw new Error(`not-regular-file: ${path}`);
+                return node.content || '';
+            }),
+            writeText: vi.fn(async (relativePath, content, options = {}) => {
+                const path = normalizePath(relativePath);
+                const node = files.get(path);
+                if (node && node.type !== 'file')
+                    throw new Error(`not-regular-file: ${path}`);
+                if (node && !options.overwrite)
+                    throw new Error(`conflict: ${path}`);
+                if (!node && !options.createIfMissing)
+                    throw new Error(`not-found: ${path}`);
+                const parent = parentPath(path);
+                if (!files.get(parent) || files.get(parent)?.type !== 'folder')
+                    throw new Error(`parent-not-found: ${parent}`);
+                files.set(path, { type: 'file', content, modifiedAt: new Date().toISOString() });
+            }),
+            createFolder: vi.fn(async (relativePath) => {
+                const path = normalizePath(relativePath);
+                if (files.has(path))
+                    throw new Error(`conflict: ${path}`);
+                const parent = parentPath(path);
+                if (!files.get(parent) || files.get(parent)?.type !== 'folder')
+                    throw new Error(`parent-not-found: ${parent}`);
+                files.set(path, { type: 'folder', modifiedAt: new Date().toISOString() });
+            }),
+            move: vi.fn(async (fromRelativePath, toRelativePath, options = {}) => {
+                const from = normalizePath(fromRelativePath);
+                const to = normalizePath(toRelativePath);
+                const node = files.get(from);
+                if (!node)
+                    throw new Error(`not-found: ${from}`);
+                if (node.type === 'folder' && (to === from || to.startsWith(`${from}/`))) {
+                    throw new Error(`move-into-self: ${from} -> ${to}`);
+                }
+                if (files.has(to) && !options.overwrite)
+                    throw new Error(`conflict: ${to}`);
+                const parent = parentPath(to);
+                if (!files.get(parent) || files.get(parent)?.type !== 'folder')
+                    throw new Error(`parent-not-found: ${parent}`);
+                const moving = Array.from(files.entries()).filter(([path]) => path === from || path.startsWith(`${from}/`));
+                moving.forEach(([path, movingNode]) => {
+                    const suffix = path.slice(from.length);
+                    files.set(`${to}${suffix}`, movingNode);
+                    files.delete(path);
+                });
+            }),
+            trash: vi.fn(async (relativePath) => {
+                const path = normalizePath(relativePath);
+                if (!files.has(path))
+                    throw new Error(`not-found: ${path}`);
+                files.delete(path);
+                const trashId = `mock-${Date.now()}`;
+                return {
+                    originalPath: path,
+                    trashPath: `.verstak/trash/files/${trashId}/${baseName(path)}`,
+                    trashId,
+                    deletedAt: new Date().toISOString(),
+                };
+            }),
+        },
+        workbench: {
+            openResource: vi.fn(async (request) => ({
+                status: 'opened',
+                providerId: request.context?.notesMode ? 'mock.notes-markdown-provider' : 'mock.open-provider',
+                providerPluginId: 'mock.editor',
+                providerComponent: 'MockEditor',
+                request: { ...request, mode: request.mode || 'view' },
+            })),
+            editResource: vi.fn(async (request) => ({
+                status: 'opened',
+                providerId: request.context?.notesMode ? 'mock.notes-markdown-provider' : 'mock.open-provider',
+                providerPluginId: 'mock.editor',
+                providerComponent: 'MockEditor',
+                request: { ...request, mode: 'edit' },
+            })),
+        },
+        dispose: vi.fn(),
     };
 }
 /**

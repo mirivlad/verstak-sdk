@@ -84,6 +84,10 @@
           "vault.read",
           "vault.write",
           "vault.watch",
+          "files.read",
+          "files.write",
+          "files.delete",
+          "workbench.open",
           "storage.namespace",
           "storage.migrations",
           "events.publish",
@@ -227,6 +231,12 @@
           "items": {
             "$ref": "#/$defs/ContributionStatusBarItem"
           }
+        },
+        "openProviders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContributionOpenProvider"
+          }
         }
       }
     },
@@ -357,6 +367,45 @@
         "handler": { "type": "string" }
       },
       "required": ["id", "label"]
+    },
+    "OpenProviderSupport": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["vault-file"]
+        },
+        "extensions": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "mime": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "contexts": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["kind"]
+    },
+    "ContributionOpenProvider": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "priority": { "type": "integer" },
+        "component": { "type": "string" },
+        "supports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OpenProviderSupport"
+          },
+          "minItems": 1
+        }
+      },
+      "required": ["id", "title", "component", "supports"]
     }
   }
 }

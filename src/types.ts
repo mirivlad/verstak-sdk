@@ -55,7 +55,8 @@ export type CapabilityName = string;
 
 export interface CapabilityEntry {
   name: CapabilityName;
-  description: string;
+  description?: string;
+  pluginId: string;
   status: 'stable' | 'draft' | 'deprecated';
 }
 
@@ -65,6 +66,10 @@ export type Permission =
   | 'vault.read'
   | 'vault.write'
   | 'vault.watch'
+  | 'files.read'
+  | 'files.write'
+  | 'files.delete'
+  | 'workbench.open'
   | 'storage.namespace'
   | 'storage.migrations'
   | 'events.publish'
@@ -84,6 +89,57 @@ export interface PermissionEntry {
   dangerous: boolean;
 }
 
+// ─── Files API ──────────────────────────────────────────────
+
+export type FileEntryType = 'file' | 'folder' | 'symlink' | 'unknown';
+
+export interface FileEntry {
+  name: string;
+  relativePath: string;
+  type: FileEntryType;
+  size: number;
+  modifiedAt: string;
+  extension: string;
+  isHidden: boolean;
+  isReserved: boolean;
+  canRead: boolean;
+  canWrite: boolean;
+}
+
+export interface FileMetadata {
+  relativePath: string;
+  type: FileEntryType;
+  size: number;
+  modifiedAt: string;
+  createdAt?: string;
+  extension: string;
+  mimeHint: string;
+  isText: boolean;
+  isHidden: boolean;
+  isReserved: boolean;
+  canRead: boolean;
+  canWrite: boolean;
+}
+
+export interface WriteTextOptions {
+  /** Create the file when it is missing. Parent folder must already exist. */
+  createIfMissing?: boolean;
+  /** Replace an existing regular file. Existing folders/symlinks are rejected. */
+  overwrite?: boolean;
+}
+
+export interface MovePathOptions {
+  /** Replace an existing target path when the host supports it. */
+  overwrite?: boolean;
+}
+
+export interface TrashResult {
+  originalPath: string;
+  trashPath: string;
+  trashId: string;
+  deletedAt: string;
+}
+
 // ─── Contribution Points ─────────────────────────────────────
 
 export interface ContributionPoints {
@@ -97,6 +153,7 @@ export interface ContributionPoints {
   searchProviders?: ContributionSearchProvider[];
   activityProviders?: ContributionActivityProvider[];
   statusBarItems?: ContributionStatusBarItem[];
+  openProviders?: ContributionOpenProvider[];
 }
 
 export interface ContributionView {
@@ -163,6 +220,51 @@ export interface ContributionStatusBarItem {
   label: string;
   position?: 'left' | 'right';
   handler?: string;
+}
+
+export type OpenResourceKind = 'vault-file';
+export type OpenResourceMode = 'view' | 'edit';
+export type OpenResourceContextName = 'generic-text' | 'generic-markdown' | 'notes-markdown' | string;
+
+export interface OpenProviderSupport {
+  kind: OpenResourceKind;
+  extensions?: string[];
+  mime?: string[];
+  contexts?: OpenResourceContextName[];
+}
+
+export interface ContributionOpenProvider {
+  id: string;
+  title: string;
+  priority?: number;
+  component: string;
+  supports: OpenProviderSupport[];
+}
+
+export interface OpenResourceContext {
+  sourcePluginId?: string;
+  sourceView?: 'files' | 'notes' | string;
+  isInsideNotesFolder?: boolean;
+  notesScopePath?: string;
+  notesMode?: boolean;
+}
+
+export interface OpenResourceRequest {
+  kind: OpenResourceKind;
+  path: string;
+  mode?: OpenResourceMode;
+  mime?: string;
+  extension?: string;
+  context?: OpenResourceContext;
+}
+
+export interface OpenResourceResult {
+  status: 'opened' | 'no-provider';
+  providerId?: string;
+  providerPluginId?: string;
+  providerComponent?: string;
+  request: OpenResourceRequest;
+  message?: string;
 }
 
 // ─── Plugin State ────────────────────────────────────────────

@@ -1,0 +1,197 @@
+import { describe, expect, test } from 'vitest';
+import manifestSchema from '../schemas/manifest.json';
+import type { OpenResourceRequest, PluginManifest } from './types';
+import { createMockPluginAPI } from './test-utils';
+
+describe('VerstakPluginAPI contract', () => {
+  test('mock API exposes the bundled runtime shape', async () => {
+    const api = createMockPluginAPI('verstak.platform-test');
+
+    expect(api.pluginId).toBe('verstak.platform-test');
+    expect(typeof api.settings.read).toBe('function');
+    expect(typeof api.settings.write).toBe('function');
+    expect(typeof api.capabilities.list).toBe('function');
+    expect(typeof api.commands.register).toBe('function');
+    expect(typeof api.commands.execute).toBe('function');
+    expect(typeof api.events.publish).toBe('function');
+    expect(typeof api.events.subscribe).toBe('function');
+    expect(typeof api.files.list).toBe('function');
+    expect(typeof api.files.metadata).toBe('function');
+    expect(typeof api.files.readText).toBe('function');
+    expect(typeof api.files.writeText).toBe('function');
+    expect(typeof api.files.createFolder).toBe('function');
+    expect(typeof api.files.move).toBe('function');
+    expect(typeof api.files.trash).toBe('function');
+    expect(typeof api.workbench.openResource).toBe('function');
+    expect(typeof api.workbench.editResource).toBe('function');
+  });
+
+  test('manifest schema accepts files permissions used by platform-test', () => {
+    const permissionEnum = ((manifestSchema as any).properties.permissions.items.enum || []) as string[];
+
+    expect(permissionEnum).toContain('files.read');
+    expect(permissionEnum).toContain('files.write');
+    expect(permissionEnum).toContain('files.delete');
+    expect(permissionEnum).toContain('workbench.open');
+  });
+
+  test('manifest types accept open provider contributions', () => {
+    const manifest: PluginManifest = {
+      schemaVersion: 1,
+      id: 'verstak.default-editor',
+      name: 'Default Editor',
+      version: '0.1.0',
+      apiVersion: '1',
+      provides: ['editor.text', 'editor.text.markdown'],
+      permissions: ['ui.register', 'files.read', 'files.write', 'workbench.open'],
+      contributes: {
+        openProviders: [
+          {
+            id: 'verstak.default-editor.markdown',
+            title: 'Default Markdown Editor',
+            priority: 100,
+            component: 'MarkdownEditor',
+            supports: [
+              {
+                kind: 'vault-file',
+                extensions: ['.md', '.markdown'],
+                contexts: ['generic-markdown', 'notes-markdown'],
+              },
+              {
+                kind: 'vault-file',
+                mime: ['text/plain'],
+                extensions: ['.txt', '.log'],
+                contexts: ['generic-text'],
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    expect(manifest.contributes?.openProviders?.[0].supports[0].contexts).toContain('notes-markdown');
+    expect(manifest.contributes?.openProviders?.[0].supports[1].contexts).toContain('generic-text');
+  });
+
+  test('OpenResourceRequest and no-provider result shape are typed', () => {
+    const request: OpenResourceRequest = {
+      kind: 'vault-file',
+      path: 'Docs/todo.txt',
+      mode: 'edit',
+      mime: 'text/plain',
+      extension: '.txt',
+      context: {
+        sourcePluginId: 'files.plugin',
+        sourceView: 'files',
+      },
+    };
+
+    const result = {
+      status: 'no-provider' as const,
+      request,
+      message: 'no open provider for resource',
+    };
+
+    expect(result.status).toBe('no-provider');
+    expect(result.request.context?.sourceView).toBe('files');
+  });
+
+  test('workbench mock routes open and edit resources', async () => {
+    const api = createMockPluginAPI('files.plugin');
+    const request: OpenResourceRequest = {
+      kind: 'vault-file',
+      path: 'Notes/Overview.md',
+      mode: 'view',
+      extension: '.md',
+      context: {
+        sourceView: 'notes',
+        isInsideNotesFolder: true,
+        notesMode: true,
+      },
+    };
+
+    await expect(api.workbench.openResource(request)).resolves.toEqual(expect.objectContaining({
+      status: 'opened',
+      providerId: expect.any(String),
+      request: expect.objectContaining({ path: 'Notes/Overview.md', mode: 'view' }),
+    }));
+    await expect(api.workbench.editResource({ ...request, mode: 'edit' })).resolves.toEqual(expect.objectContaining({
+      status: 'opened',
+      request: expect.objectContaining({ mode: 'edit' }),
+    }));
+  });
+
+  test('settings persist in the mock API namespace', async () => {
+    const api = createMockPluginAPI();
+
+    await api.settings.write('savedText', 'hello');
+
+    await expect(api.settings.read('savedText')).resolves.toBe('hello');
+    await expect(api.settings.read()).resolves.toEqual({ savedText: 'hello' });
+  });
+
+  test('commands register, execute, and unregister', async () => {
+    const api = createMockPluginAPI('cmd.plugin');
+
+    const unregister = await api.commands.register('cmd.plugin.echo', async (args) => args.value);
+    await expect(api.commands.execute('cmd.plugin.echo', { value: 'ok' })).resolves.toEqual({
+      status: 'handled',
+      pluginId: 'cmd.plugin',
+      commandId: 'cmd.plugin.echo',
+      result: 'ok',
+    });
+
+    unregister();
+    await expect(api.commands.execute('cmd.plugin.echo', {})).rejects.toThrow('declared-but-unhandled');
+  });
+
+  test('events publish to subscribers and unsubscribe cleanly', async () => {
+    const api = createMockPluginAPI('event.plugin');
+    const received: unknown[] = [];
+
+    const unsubscribe = await api.events.subscribe('event.plugin.echo', (event) => {
+      received.push(event.payload.message);
+    });
+    await api.events.publish('event.plugin.echo', { message: 'first' });
+    unsubscribe();
+    await api.events.publish('event.plugin.echo', { message: 'second' });
+
+    expect(received).toEqual(['first']);
+  });
+
+  test('files mock supports text write, read, list, move, and trash', async () => {
+    const api = createMockPluginAPI('files.plugin');
+
+    await api.files.createFolder('PlatformTest');
+    await api.files.writeText('PlatformTest/one.txt', 'hello', { createIfMissing: true });
+    await expect(api.files.readText('PlatformTest/one.txt')).resolves.toBe('hello');
+    await expect(api.files.list('PlatformTest')).resolves.toEqual([
+      expect.objectContaining({ relativePath: 'PlatformTest/one.txt', type: 'file' }),
+    ]);
+    await api.files.move('PlatformTest/one.txt', 'PlatformTest/two.txt');
+    const trash = await api.files.trash('PlatformTest/two.txt');
+
+    expect(trash.originalPath).toBe('PlatformTest/two.txt');
+    expect(trash.trashId).toBeTruthy();
+    expect(trash.trashPath).toMatch(/^\.verstak\/trash\/files\/.+\/two\.txt$/);
+  });
+
+  test('files mock rejects non-canonical and reserved paths', async () => {
+    const api = createMockPluginAPI('files.plugin');
+
+    await expect(api.files.readText(String.raw`PlatformTest\one.txt`)).rejects.toThrow('backslash');
+    await expect(api.files.readText('//server/share')).rejects.toThrow('absolute');
+    await expect(api.files.readText('C:/Windows/system.ini')).rejects.toThrow('absolute');
+    await expect(api.files.readText('../secret')).rejects.toThrow('path-traversal');
+    await expect(api.files.readText('bad\0path')).rejects.toThrow('null-byte');
+    await expect(api.files.readText('.Verstak/vault.json')).rejects.toThrow('reserved-path');
+  });
+
+  test('files mock rejects moving a folder into itself', async () => {
+    const api = createMockPluginAPI('files.plugin');
+
+    await api.files.createFolder('Folder');
+
+    await expect(api.files.move('Folder', 'Folder/Child')).rejects.toThrow('move-into-self');
+  });
+});

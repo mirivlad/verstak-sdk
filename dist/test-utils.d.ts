@@ -1,4 +1,5 @@
 import type { PluginManifest, PluginState } from './types';
+import type { VerstakPluginAPI } from './plugin-api';
 /**
  * Создать тестовый manifest для unit-тестов.
  */
@@ -10,15 +11,7 @@ export declare function createTestPluginState(overrides?: Partial<PluginState>):
 /**
  * Создать заглушку VerstakPluginAPI для тестов.
  */
-export declare function createMockPluginAPI(): {
-    registerView: ReturnType<typeof vi.fn>;
-    registerCommand: ReturnType<typeof vi.fn>;
-    registerSettingsPanel: ReturnType<typeof vi.fn>;
-    hasCapability: ReturnType<typeof vi.fn>;
-    callBackend: ReturnType<typeof vi.fn>;
-    subscribe: ReturnType<typeof vi.fn>;
-    publish: ReturnType<typeof vi.fn>;
-};
+export declare function createMockPluginAPI(pluginId?: string): VerstakPluginAPI;
 /**
  * Валидатор plugin manifest.
  */

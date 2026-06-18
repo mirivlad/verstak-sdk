@@ -1,166 +1,103 @@
-// Verstak Plugin SDK — VerstakPluginAPI
-// The official runtime API available to all plugins in the frontend context.
+// Verstak Plugin SDK — bundled frontend plugin API contract.
+//
+// The desktop host creates the real API with createPluginAPI(pluginId) inside
+// VerstakPluginAPI.js and passes it to bundled plugin components at mount time.
+// This SDK file intentionally exposes the TypeScript contract only; it is not
+// a standalone security boundary or RPC client.
 
-import type { PluginSettings } from './types';
+import type {
+  CapabilityEntry,
+  FileEntry,
+  FileMetadata,
+  MovePathOptions,
+  OpenResourceRequest,
+  OpenResourceResult,
+  PluginSettings,
+  TrashResult,
+  WriteTextOptions,
+} from './types';
 
-/**
- * VerstakPluginAPI — единственный способ для frontend плагина
- * общаться с core платформы.
- *
- * Экземпляр API передаётся плагину при активации через глобальную
- * переменную `window.__VERSTAK_PLUGIN_API__`.
- */
-export class VerstakPluginAPI {
-  private pluginId: string;
-  private capabilities = new Set<string>();
+export type PluginCommandArgs = Record<string, unknown>;
+export type PluginCommandHandler = (
+  args: PluginCommandArgs,
+  declaration: PluginCommandDeclaration
+) => unknown | Promise<unknown>;
+export type Unsubscribe = () => void;
 
-  constructor(pluginId: string) {
-    this.pluginId = pluginId;
-  }
-
-  /**
-   * Инициализация API — вызывается core после загрузки frontend bundle.
-   * @internal
-   */
-  _init(capabilities: string[]): void {
-    this.capabilities = new Set(capabilities);
-  }
-
-  // ─── View Registration ─────────────────────────────────────
-
-  /**
-   * Зарегистрировать view для отображения в UI Shell.
-   */
-  registerView(id: string, component: unknown): void {
-    this._postMessage('register.view', { id, component });
-  }
-
-  /**
-   * Зарегистрировать панель настроек плагина.
-   */
-  registerSettingsPanel(id: string, title: string, component: unknown): void {
-    this._postMessage('register.settingsPanel', { id, title, component });
-  }
-
-  /**
-   * Зарегистрировать команду для command palette.
-   */
-  registerCommand(id: string, title: string, handler: () => void, keybinding?: string): void {
-    this._postMessage('register.command', { id, title, keybinding, handler: handler.toString() });
-  }
-
-  /**
-   * Зарегистрировать действия для файлов.
-   */
-  registerFileAction(id: string, label: string, handler: (filePath: string) => void, capability?: string): void {
-    this._postMessage('register.fileAction', { id, label, handler: handler.toString(), capability });
-  }
-
-  /**
-   * Зарегистрировать действия для заметок.
-   */
-  registerNoteAction(id: string, label: string, handler: (noteId: string) => void, capability?: string): void {
-    this._postMessage('register.noteAction', { id, label, handler: handler.toString(), capability });
-  }
-
-  /**
-   * Зарегистрировать provider поиска.
-   */
-  registerSearchProvider(id: string, label: string, handler: (query: string) => unknown[]): void {
-    this._postMessage('register.searchProvider', { id, label, handler: handler.toString() });
-  }
-
-  // ─── Capabilities ──────────────────────────────────────────
-
-  /**
-   * Проверить, доступна ли capability.
-   */
-  hasCapability(name: string): boolean {
-    return this.capabilities.has(name);
-  }
-
-  /**
-   * Получить список всех доступных capabilities.
-   */
-  getAvailableCapabilities(): string[] {
-    return Array.from(this.capabilities);
-  }
-
-  // ─── Backend Communication ─────────────────────────────────
-
-  /**
-   * Вызвать backend метод плагина через RPC.
-   */
-  async callBackend(method: string, args: unknown[] = []): Promise<unknown> {
-    return this._rpcCall(method, args);
-  }
-
-  // ─── Settings ──────────────────────────────────────────────
-
-  /**
-   * Прочитать настройки плагина.
-   */
-  async readSettings(): Promise<PluginSettings> {
-    const result = await this._rpcCall('readSettings', []);
-    return result as PluginSettings;
-  }
-
-  /**
-   * Записать настройки плагина.
-   */
-  async writeSettings(settings: PluginSettings): Promise<void> {
-    await this._rpcCall('writeSettings', [settings]);
-  }
-
-  // ─── Event Bus ─────────────────────────────────────────────
-
-  /**
-   * Подписаться на событие event bus.
-   */
-  subscribe(event: string, handler: (payload: unknown) => void): void {
-    this._postMessage('subscribe', { event, handler: handler.toString() });
-  }
-
-  /**
-   * Опубликовать событие в event bus.
-   */
-  publish(event: string, payload: unknown): void {
-    this._postMessage('publish', { event, payload });
-  }
-
-  // ─── Internal ──────────────────────────────────────────────
-
-  private _postMessage(type: string, data: Record<string, unknown>): void {
-    window.dispatchEvent(new CustomEvent('verstak:plugin', {
-      detail: { pluginId: this.pluginId, type, data }
-    }));
-  }
-
-  private async _rpcCall(method: string, args: unknown[]): Promise<unknown> {
-    return new Promise((resolve, reject) => {
-      const callId = `${this.pluginId}:${Date.now()}:${Math.random()}`;
-      const handler = (event: CustomEvent) => {
-        if (event.detail.callId === callId) {
-          window.removeEventListener('verstak:rpc:response', handler as EventListener);
-          if (event.detail.error) {
-            reject(new Error(event.detail.error));
-          } else {
-            resolve(event.detail.result);
-          }
-        }
-      };
-      window.addEventListener('verstak:rpc:response', handler as EventListener);
-      this._postMessage('rpc', { callId, method, args });
-    });
-  }
+export interface PluginCommandDeclaration {
+  status: 'declared';
+  pluginId: string;
+  commandId: string;
+  handler?: string;
+  args?: PluginCommandArgs;
 }
 
-/**
- * Создать экземпляр VerstakPluginAPI.
- * Core вызывает эту функцию после загрузки frontend bundle,
- * передавая pluginId и список доступных capabilities.
- */
-export function createPluginAPI(pluginId: string): VerstakPluginAPI {
-  const api = new VerstakPluginAPI(pluginId);
-  return api;
+export interface PluginCommandResult {
+  status: 'handled';
+  pluginId: string;
+  commandId: string;
+  result: unknown;
+}
+
+export interface PluginEvent<TPayload = Record<string, unknown>> {
+  name: string;
+  pluginId: string;
+  payload: TPayload;
+  timestamp: string;
+}
+
+export interface VerstakPluginAPI {
+  readonly pluginId: string;
+
+  settings: {
+    read(): Promise<PluginSettings>;
+    read<T = unknown>(key: string): Promise<T | undefined>;
+    write(key: string, value: unknown): Promise<PluginSettings>;
+    writeAll(settings: PluginSettings): Promise<void>;
+  };
+
+  capabilities: {
+    has(capability: string): Promise<boolean>;
+    get(capability: string): Promise<{ available: boolean; name?: string; pluginId?: string; status?: string }>;
+    list(): Promise<CapabilityEntry[]>;
+  };
+
+  commands: {
+    register(commandId: string, handler: PluginCommandHandler): Promise<Unsubscribe>;
+    execute(commandId: string, args?: PluginCommandArgs): Promise<PluginCommandResult>;
+  };
+
+  events: {
+    publish(eventName: string, payload?: Record<string, unknown>): Promise<void>;
+    subscribe<TPayload = Record<string, unknown>>(
+      eventName: string,
+      handler: (event: PluginEvent<TPayload>) => void
+    ): Promise<Unsubscribe>;
+  };
+
+  files: {
+    /**
+     * Files API uses canonical vault-relative slash paths. Backslashes,
+     * Windows/UNC absolute paths, traversal, null bytes, `.verstak` variants,
+     * and symlink read/write/move/trash operations are rejected by the host.
+     */
+    list(relativeDir?: string): Promise<FileEntry[]>;
+    metadata(relativePath: string): Promise<FileMetadata>;
+    readText(relativePath: string): Promise<string>;
+    writeText(relativePath: string, content: string, options?: WriteTextOptions): Promise<void>;
+    createFolder(relativePath: string): Promise<void>;
+    move(fromRelativePath: string, toRelativePath: string, options?: MovePathOptions): Promise<void>;
+    trash(relativePath: string): Promise<TrashResult>;
+  };
+
+  workbench: {
+    openResource(request: OpenResourceRequest): Promise<OpenResourceResult>;
+    editResource(request: OpenResourceRequest): Promise<OpenResourceResult>;
+  };
+
+  dispose?: () => void;
+}
+
+export function createPluginAPI(_pluginId: string): VerstakPluginAPI {
+  throw new Error('createPluginAPI is provided by Verstak Desktop at plugin runtime');
 }
