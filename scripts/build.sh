@@ -34,7 +34,7 @@ if [ "$FAILED" -ne 0 ]; then
 fi
 
 # Install dependencies if needed
-if [ ! -d "$ROOT/node_modules" ]; then
+if [ ! -d "$ROOT/node_modules" ] || [ ! -f "$ROOT/node_modules/.package-lock.json" ]; then
   if [ -f "$ROOT/package-lock.json" ]; then
     (cd "$ROOT" && npm ci --no-audit --no-fund)
     report "npm ci" $?

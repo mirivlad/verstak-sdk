@@ -237,6 +237,12 @@
           "items": {
             "$ref": "#/$defs/ContributionOpenProvider"
           }
+        },
+        "workspaceItems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContributionWorkspaceItem"
+          }
         }
       }
     },
@@ -406,6 +412,16 @@
         }
       },
       "required": ["id", "title", "component", "supports"]
+    },
+    "ContributionWorkspaceItem": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "icon": { "type": "string" },
+        "component": { "type": "string" }
+      },
+      "required": ["id", "title", "component"]
     }
   }
 }

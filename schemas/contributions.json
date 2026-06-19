@@ -44,6 +44,8 @@
     { "id": "status.bar.items", "description": "Status bar items", "type": "item", "status": "draft" },
     { "id": "importers", "description": "Data import providers", "type": "provider", "status": "draft" },
     { "id": "exporters", "description": "Data export providers", "type": "provider", "status": "draft" },
-    { "id": "protocol.receivers", "description": "Custom protocol message receivers", "type": "provider", "status": "draft" }
+    { "id": "protocol.receivers", "description": "Custom protocol message receivers", "type": "provider", "status": "draft" },
+    { "id": "openProviders", "description": "Editor/viewer open providers for workbench resource routing", "type": "provider", "status": "draft" },
+    { "id": "workspaceItems", "description": "Workspace tool items shown in workspace host area", "type": "view", "status": "draft" }
   ]
 }

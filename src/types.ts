@@ -154,6 +154,7 @@ export interface ContributionPoints {
   activityProviders?: ContributionActivityProvider[];
   statusBarItems?: ContributionStatusBarItem[];
   openProviders?: ContributionOpenProvider[];
+  workspaceItems?: ContributionWorkspaceItem[];
 }
 
 export interface ContributionView {
@@ -239,6 +240,13 @@ export interface ContributionOpenProvider {
   priority?: number;
   component: string;
   supports: OpenProviderSupport[];
+}
+
+export interface ContributionWorkspaceItem {
+  id: string;
+  title: string;
+  icon?: string;
+  component: string;
 }
 
 export interface OpenResourceContext {
