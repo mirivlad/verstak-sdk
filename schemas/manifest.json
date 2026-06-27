@@ -393,6 +393,13 @@
         "contexts": {
           "type": "array",
           "items": { "type": "string" }
+        },
+        "modes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["view", "edit"]
+          }
         }
       },
       "required": ["kind"]

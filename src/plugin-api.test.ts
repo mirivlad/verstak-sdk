@@ -97,6 +97,7 @@ describe('VerstakPluginAPI contract', () => {
                 kind: 'vault-file',
                 extensions: ['.md', '.markdown'],
                 contexts: ['generic-markdown', 'notes-markdown'],
+                modes: ['view'],
               },
               {
                 kind: 'vault-file',
@@ -111,6 +112,7 @@ describe('VerstakPluginAPI contract', () => {
     };
 
     expect(manifest.contributes?.openProviders?.[0].supports[0].contexts).toContain('notes-markdown');
+    expect(manifest.contributes?.openProviders?.[0].supports[0].modes).toContain('view');
     expect(manifest.contributes?.openProviders?.[0].supports[1].contexts).toContain('generic-text');
   });
 

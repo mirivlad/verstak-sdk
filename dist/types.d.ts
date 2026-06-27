@@ -173,6 +173,7 @@ export interface OpenProviderSupport {
     extensions?: string[];
     mime?: string[];
     contexts?: OpenResourceContextName[];
+    modes?: OpenResourceMode[];
 }
 export interface ContributionOpenProvider {
     id: string;
