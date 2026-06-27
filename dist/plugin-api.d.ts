@@ -81,6 +81,8 @@ export interface VerstakPluginAPI {
         createFolder(relativePath: string): Promise<void>;
         move(fromRelativePath: string, toRelativePath: string, options?: MovePathOptions): Promise<void>;
         trash(relativePath: string): Promise<TrashResult>;
+        openExternal(relativePath: string): Promise<void>;
+        showInFolder(relativePath: string): Promise<void>;
     };
     workbench: {
         openResource(request: OpenResourceRequest): Promise<OpenResourceResult>;

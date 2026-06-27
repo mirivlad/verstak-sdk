@@ -69,6 +69,7 @@ export type Permission =
   | 'files.read'
   | 'files.write'
   | 'files.delete'
+  | 'files.openExternal'
   | 'workbench.open'
   | 'storage.namespace'
   | 'storage.migrations'

@@ -203,6 +203,14 @@ export function createMockPluginAPI(pluginId = 'test.plugin'): VerstakPluginAPI 
           deletedAt: new Date().toISOString(),
         };
       }),
+      openExternal: vi.fn(async (relativePath: string) => {
+        const path = normalizePath(relativePath);
+        if (!files.has(path)) throw new Error(`not-found: ${path}`);
+      }),
+      showInFolder: vi.fn(async (relativePath: string) => {
+        const path = normalizePath(relativePath);
+        if (!files.has(path)) throw new Error(`not-found: ${path}`);
+      }),
     },
     workbench: {
       openResource: vi.fn(async (request) => ({

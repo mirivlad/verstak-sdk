@@ -45,7 +45,7 @@ export interface CapabilityEntry {
     pluginId: string;
     status: 'stable' | 'draft' | 'deprecated';
 }
-export type Permission = 'vault.read' | 'vault.write' | 'vault.watch' | 'files.read' | 'files.write' | 'files.delete' | 'workbench.open' | 'storage.namespace' | 'storage.migrations' | 'events.publish' | 'events.subscribe' | 'ui.register' | 'commands.register' | 'network.local' | 'network.remote' | 'process.spawn' | 'secrets.read' | 'secrets.write' | 'sync.participate';
+export type Permission = 'vault.read' | 'vault.write' | 'vault.watch' | 'files.read' | 'files.write' | 'files.delete' | 'files.openExternal' | 'workbench.open' | 'storage.namespace' | 'storage.migrations' | 'events.publish' | 'events.subscribe' | 'ui.register' | 'commands.register' | 'network.local' | 'network.remote' | 'process.spawn' | 'secrets.read' | 'secrets.write' | 'sync.participate';
 export interface PermissionEntry {
     name: Permission;
     description: string;

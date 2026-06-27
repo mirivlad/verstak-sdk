@@ -23,6 +23,8 @@ describe('VerstakPluginAPI contract', () => {
     expect(typeof api.files.createFolder).toBe('function');
     expect(typeof api.files.move).toBe('function');
     expect(typeof api.files.trash).toBe('function');
+    expect(typeof api.files.openExternal).toBe('function');
+    expect(typeof api.files.showInFolder).toBe('function');
     expect(typeof api.workbench.openResource).toBe('function');
     expect(typeof api.workbench.editResource).toBe('function');
     expect(typeof api.sync.status).toBe('function');
@@ -36,6 +38,7 @@ describe('VerstakPluginAPI contract', () => {
     expect(permissionEnum).toContain('files.read');
     expect(permissionEnum).toContain('files.write');
     expect(permissionEnum).toContain('files.delete');
+    expect(permissionEnum).toContain('files.openExternal');
     expect(permissionEnum).toContain('workbench.open');
   });
 
@@ -196,7 +199,7 @@ describe('VerstakPluginAPI contract', () => {
     expect(received).toEqual(['first']);
   });
 
-  test('files mock supports text write, read, list, move, and trash', async () => {
+  test('files mock supports text write, read, list, move, trash, and external open', async () => {
     const api = createMockPluginAPI('files.plugin');
 
     await api.files.createFolder('PlatformTest');
@@ -205,6 +208,8 @@ describe('VerstakPluginAPI contract', () => {
     await expect(api.files.list('PlatformTest')).resolves.toEqual([
       expect.objectContaining({ relativePath: 'PlatformTest/one.txt', type: 'file' }),
     ]);
+    await expect(api.files.openExternal('PlatformTest/one.txt')).resolves.toBeUndefined();
+    await expect(api.files.showInFolder('PlatformTest/one.txt')).resolves.toBeUndefined();
     await api.files.move('PlatformTest/one.txt', 'PlatformTest/two.txt');
     const trash = await api.files.trash('PlatformTest/two.txt');
 
