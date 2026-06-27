@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import manifestSchema from '../schemas/manifest.json';
 import type { OpenResourceRequest, PluginManifest } from './types';
 import { createMockPluginAPI } from './test-utils';
@@ -24,6 +25,9 @@ describe('VerstakPluginAPI contract', () => {
     expect(typeof api.files.trash).toBe('function');
     expect(typeof api.workbench.openResource).toBe('function');
     expect(typeof api.workbench.editResource).toBe('function');
+    expect(typeof api.sync.status).toBe('function');
+    expect(typeof api.sync.configure).toBe('function');
+    expect(typeof api.sync.now).toBe('function');
   });
 
   test('manifest schema accepts files permissions used by platform-test', () => {
@@ -35,13 +39,46 @@ describe('VerstakPluginAPI contract', () => {
     expect(permissionEnum).toContain('workbench.open');
   });
 
+  test('official plugin manifests comply with SDK apiVersion and permission schema', () => {
+    const pluginsDir = new URL('../../verstak-official-plugins/plugins/', import.meta.url);
+    if (!existsSync(pluginsDir)) {
+      return;
+    }
+
+    const apiVersionPattern = new RegExp((manifestSchema as any).properties.apiVersion.pattern);
+    const permissionEnum = ((manifestSchema as any).properties.permissions.items.enum || []) as string[];
+    const problems: string[] = [];
+
+    for (const entry of readdirSync(pluginsDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) {
+        continue;
+      }
+      const manifestPath = new URL(`${entry.name}/plugin.json`, pluginsDir);
+      if (!existsSync(manifestPath)) {
+        continue;
+      }
+
+      const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as PluginManifest;
+      if (!apiVersionPattern.test(manifest.apiVersion)) {
+        problems.push(`${manifest.id}: apiVersion ${manifest.apiVersion} does not match SDK schema`);
+      }
+      for (const permission of manifest.permissions) {
+        if (!permissionEnum.includes(permission)) {
+          problems.push(`${manifest.id}: permission ${permission} is not in SDK schema`);
+        }
+      }
+    }
+
+    expect(problems).toEqual([]);
+  });
+
   test('manifest types accept open provider contributions', () => {
     const manifest: PluginManifest = {
       schemaVersion: 1,
       id: 'verstak.default-editor',
       name: 'Default Editor',
       version: '0.1.0',
-      apiVersion: '1',
+      apiVersion: '0.1.0',
       provides: ['editor.text', 'editor.text.markdown'],
       permissions: ['ui.register', 'files.read', 'files.write', 'workbench.open'],
       contributes: {

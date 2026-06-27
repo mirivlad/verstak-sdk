@@ -36,7 +36,7 @@
     "apiVersion": {
       "type": "string",
       "description": "Verstak Platform API version this plugin targets",
-      "pattern": "^\\d+$"
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.]+)?$"
     },
     "description": {
       "type": "string",

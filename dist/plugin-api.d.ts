@@ -21,6 +21,27 @@ export interface PluginEvent<TPayload = Record<string, unknown>> {
     payload: TPayload;
     timestamp: string;
 }
+export interface SyncStatus {
+    configured: boolean;
+    serverUrl: string;
+    deviceId: string;
+    deviceName: string;
+    connected: boolean;
+    revoked: boolean;
+    tokenStored: boolean;
+    unpushedOps: number;
+    lastSyncAt: string;
+    syncInterval: number;
+    lastError: string;
+    statusLabel: string;
+}
+export interface SyncNowResult {
+    pushed: number;
+    pulled: number;
+    serverSequence: number;
+    conflicts?: unknown[];
+    applyErrors?: string[];
+}
 export interface VerstakPluginAPI {
     readonly pluginId: string;
     settings: {
@@ -64,6 +85,14 @@ export interface VerstakPluginAPI {
     workbench: {
         openResource(request: OpenResourceRequest): Promise<OpenResourceResult>;
         editResource(request: OpenResourceRequest): Promise<OpenResourceResult>;
+    };
+    sync: {
+        status(): Promise<SyncStatus>;
+        configure(serverUrl: string, username: string, password: string): Promise<void>;
+        disconnect(): Promise<void>;
+        testConnection(serverUrl: string, username: string, password: string): Promise<void>;
+        setInterval(minutes: number): Promise<void>;
+        now(): Promise<SyncNowResult>;
     };
     dispose?: () => void;
 }
