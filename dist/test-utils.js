@@ -258,6 +258,7 @@ export function createMockPluginAPI(pluginId = 'test.plugin') {
             disconnect: vi.fn(async () => { }),
             testConnection: vi.fn(async () => { }),
             setInterval: vi.fn(async () => { }),
+            resetKey: vi.fn(async () => { }),
             now: vi.fn(async () => ({ pushed: 0, pulled: 0, serverSequence: 0 })),
         },
         dispose: vi.fn(),

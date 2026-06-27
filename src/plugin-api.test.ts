@@ -29,6 +29,7 @@ describe('VerstakPluginAPI contract', () => {
     expect(typeof api.workbench.editResource).toBe('function');
     expect(typeof api.sync.status).toBe('function');
     expect(typeof api.sync.configure).toBe('function');
+    expect(typeof api.sync.resetKey).toBe('function');
     expect(typeof api.sync.now).toBe('function');
   });
 

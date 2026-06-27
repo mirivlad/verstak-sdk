@@ -94,6 +94,7 @@ export interface VerstakPluginAPI {
         disconnect(): Promise<void>;
         testConnection(serverUrl: string, username: string, password: string): Promise<void>;
         setInterval(minutes: number): Promise<void>;
+        resetKey(): Promise<void>;
         now(): Promise<SyncNowResult>;
     };
     dispose?: () => void;
