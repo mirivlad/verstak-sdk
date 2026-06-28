@@ -69,6 +69,9 @@ export interface VerstakPluginAPI {
             write(name: string, data: PluginDataJSON): Promise<void>;
         };
     };
+    ui: {
+        openSettings(panelId?: string): Promise<void>;
+    };
     capabilities: {
         has(capability: string): Promise<boolean>;
         get(capability: string): Promise<{

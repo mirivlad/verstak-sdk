@@ -126,6 +126,17 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
                 }),
             },
         },
+        ui: {
+            openSettings: vi.fn(async (panelId) => {
+                const event = {
+                    name: 'ui.openSettings',
+                    pluginId,
+                    payload: { pluginId, panelId: panelId || '' },
+                    timestamp: new Date().toISOString(),
+                };
+                (eventHandlers.get('ui.openSettings') || []).slice().forEach((handler) => handler(event));
+            }),
+        },
         capabilities: {
             has: vi.fn(async () => false),
             get: vi.fn(async (name) => ({ available: false, name })),

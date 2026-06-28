@@ -14,6 +14,7 @@ describe('VerstakPluginAPI contract', () => {
     expect(typeof api.settings.write).toBe('function');
     expect(typeof api.storage.data.read).toBe('function');
     expect(typeof api.storage.data.write).toBe('function');
+    expect(typeof api.ui.openSettings).toBe('function');
     expect(typeof api.capabilities.list).toBe('function');
     expect(typeof api.commands.register).toBe('function');
     expect(typeof api.commands.execute).toBe('function');
@@ -209,6 +210,20 @@ describe('VerstakPluginAPI contract', () => {
     });
     await expect(api.settings.read('search-index')).resolves.toEqual({ source: 'settings' });
     await expect(api.storage.data.read('missing')).resolves.toEqual({});
+  });
+
+  test('ui openSettings publishes the requested settings target in the mock API namespace', async () => {
+    const api = createMockPluginAPI('ui.plugin');
+    const received: unknown[] = [];
+
+    const unsubscribe = await api.events.subscribe('ui.openSettings', (event) => {
+      received.push(event.payload);
+    });
+
+    await api.ui.openSettings('ui.plugin.settings');
+
+    expect(received).toEqual([{ pluginId: 'ui.plugin', panelId: 'ui.plugin.settings' }]);
+    unsubscribe();
   });
 
   test('commands register, execute, and unregister', async () => {

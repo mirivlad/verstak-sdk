@@ -104,6 +104,10 @@ export interface VerstakPluginAPI {
     };
   };
 
+  ui: {
+    openSettings(panelId?: string): Promise<void>;
+  };
+
   capabilities: {
     has(capability: string): Promise<boolean>;
     get(capability: string): Promise<{ available: boolean; name?: string; pluginId?: string; status?: string }>;
