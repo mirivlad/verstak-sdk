@@ -44,6 +44,7 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
     const eventHandlers = new Map();
     const files = new Map();
     const trashEntries = [];
+    const trashPayloads = new Map();
     files.set('', { type: 'folder', modifiedAt: new Date().toISOString() });
     function normalizePath(path, allowRoot = false) {
         const raw = String(path || '');
@@ -241,11 +242,41 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
                     originalType: node.type,
                     basename: baseName(path),
                 };
-                files.delete(path);
+                const moving = Array.from(files.entries()).filter(([candidate]) => candidate === path || candidate.startsWith(`${path}/`));
+                trashPayloads.set(trashId, moving.map(([candidate, movingNode]) => ({
+                    suffix: candidate.slice(path.length),
+                    node: { ...movingNode },
+                })));
+                moving.forEach(([candidate]) => files.delete(candidate));
                 trashEntries.unshift(entry);
                 return entry;
             }),
             listTrash: vi.fn(async () => trashEntries.slice()),
+            restoreTrash: vi.fn(async (trashId, options = {}) => {
+                const entry = trashEntries.find((item) => item.trashId === trashId);
+                if (!entry)
+                    throw new Error(`not-found: trash entry ${trashId}`);
+                const target = normalizePath(options.targetPath || entry.originalPath);
+                const overwrite = !!options.overwrite;
+                if (files.has(target) && !overwrite)
+                    throw new Error(`conflict: ${target}`);
+                const parent = parentPath(target);
+                if (!files.get(parent) || files.get(parent)?.type !== 'folder')
+                    throw new Error(`parent-not-found: ${parent}`);
+                if (overwrite) {
+                    Array.from(files.keys())
+                        .filter((candidate) => candidate === target || candidate.startsWith(`${target}/`))
+                        .forEach((candidate) => files.delete(candidate));
+                }
+                (trashPayloads.get(trashId) || []).forEach(({ suffix, node }) => {
+                    files.set(`${target}${suffix}`, { ...node, modifiedAt: new Date().toISOString() });
+                });
+                trashPayloads.delete(trashId);
+                const index = trashEntries.findIndex((item) => item.trashId === trashId);
+                if (index >= 0)
+                    trashEntries.splice(index, 1);
+                return target;
+            }),
             openExternal: vi.fn(async (relativePath) => {
                 const path = normalizePath(relativePath);
                 if (!files.has(path))

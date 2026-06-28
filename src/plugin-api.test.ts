@@ -26,6 +26,7 @@ describe('VerstakPluginAPI contract', () => {
     expect(typeof api.files.move).toBe('function');
     expect(typeof api.files.trash).toBe('function');
     expect(typeof api.files.listTrash).toBe('function');
+    expect(typeof api.files.restoreTrash).toBe('function');
     expect(typeof api.files.openExternal).toBe('function');
     expect(typeof api.files.showInFolder).toBe('function');
     expect(typeof api.workbench.openResource).toBe('function');
@@ -251,6 +252,11 @@ describe('VerstakPluginAPI contract', () => {
     await expect(api.files.listTrash()).resolves.toEqual([
       expect.objectContaining({ originalPath: 'PlatformTest/two.txt', trashId: trash.trashId }),
     ]);
+    await expect(api.files.restoreTrash(trash.trashId)).resolves.toBe('PlatformTest/two.txt');
+    await expect(api.files.list('PlatformTest')).resolves.toEqual([
+      expect.objectContaining({ relativePath: 'PlatformTest/two.txt', type: 'file' }),
+    ]);
+    await expect(api.files.listTrash()).resolves.toEqual([]);
   });
 
   test('files mock rejects non-canonical and reserved paths', async () => {

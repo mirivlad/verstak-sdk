@@ -88,6 +88,12 @@ export interface MovePathOptions {
     /** Replace an existing target path when the host supports it. */
     overwrite?: boolean;
 }
+export interface RestoreTrashOptions {
+    /** Restore to another vault-relative path instead of the original path. */
+    targetPath?: string;
+    /** Replace an existing target path. Hosts reject conflicts by default. */
+    overwrite?: boolean;
+}
 export interface TrashResult {
     originalPath: string;
     trashPath: string;

@@ -14,6 +14,7 @@ import type {
   OpenResourceResult,
   PluginSettings,
   RegisteredContributionPoints,
+  RestoreTrashOptions,
   TrashEntry,
   TrashResult,
   WriteTextOptions,
@@ -122,6 +123,7 @@ export interface VerstakPluginAPI {
     move(fromRelativePath: string, toRelativePath: string, options?: MovePathOptions): Promise<void>;
     trash(relativePath: string): Promise<TrashResult>;
     listTrash(): Promise<TrashEntry[]>;
+    restoreTrash(trashId: string, options?: RestoreTrashOptions): Promise<string>;
     openExternal(relativePath: string): Promise<void>;
     showInFolder(relativePath: string): Promise<void>;
   };
