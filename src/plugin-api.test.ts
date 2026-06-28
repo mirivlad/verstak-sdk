@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import manifestSchema from '../schemas/manifest.json';
+import vaultEventsSchema from '../schemas/events/vault.json';
 import type { OpenResourceRequest, PluginManifest } from './types';
 import { createMockPluginAPI } from './test-utils';
 
@@ -45,6 +46,17 @@ describe('VerstakPluginAPI contract', () => {
     expect(permissionEnum).toContain('files.delete');
     expect(permissionEnum).toContain('files.openExternal');
     expect(permissionEnum).toContain('workbench.open');
+  });
+
+  test('file.changed schema documents watcher refresh payload', () => {
+    const fileChanged = (vaultEventsSchema as any).events.find((event: any) => event.name === 'file.changed');
+
+    expect(fileChanged.schema.required).toContain('operation');
+    expect(fileChanged.schema.properties.operation.enum).toContain('external.create');
+    expect(fileChanged.schema.properties.operation.enum).toContain('external.update');
+    expect(fileChanged.schema.properties.operation.enum).toContain('external.delete');
+    expect(fileChanged.schema.properties.workspaceRootPath.type).toBe('string');
+    expect(fileChanged.schema.properties.external.type).toBe('boolean');
   });
 
   test('official plugin manifests comply with SDK apiVersion and permission schema', () => {

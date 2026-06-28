@@ -395,8 +395,21 @@ export interface FileChangedEvent extends VerstakEvent {
   name: 'file.changed';
   payload: {
     path: string;
-    size?: number;
-    changedAt: string;
+    title?: string;
+    operation:
+      | 'create'
+      | 'update'
+      | 'move'
+      | 'delete'
+      | 'external.create'
+      | 'external.update'
+      | 'external.delete';
+    type?: 'file' | 'folder' | 'symlink' | 'unknown';
+    workspaceRootPath?: string;
+    external?: boolean;
+    trashId?: string;
+    fromPath?: string;
+    changedAt?: string;
   };
 }
 

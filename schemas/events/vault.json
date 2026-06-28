@@ -150,15 +150,25 @@
     },
     {
       "name": "file.changed",
-      "description": "A file in the vault has been modified",
+      "description": "A vault file or folder has changed and file surfaces should refresh",
       "schema": {
         "type": "object",
         "properties": {
           "path": { "type": "string", "description": "File path relative to vault" },
-          "size": { "type": "integer", "description": "New file size" },
-          "changedAt": { "type": "string", "description": "ISO 8601 timestamp" }
+          "title": { "type": "string", "description": "Activity title, usually the path" },
+          "operation": {
+            "type": "string",
+            "enum": ["create", "update", "move", "delete", "external.create", "external.update", "external.delete"],
+            "description": "Change operation. external.* values come from the live vault watcher."
+          },
+          "type": { "type": "string", "enum": ["file", "folder", "symlink", "unknown"], "description": "Changed entry type when known" },
+          "workspaceRootPath": { "type": "string", "description": "Top-level workspace folder inferred from path" },
+          "external": { "type": "boolean", "description": "True when the change was observed outside the Files API" },
+          "trashId": { "type": "string", "description": "Internal trash id for restore/trash related changes" },
+          "fromPath": { "type": "string", "description": "Previous path for move operations" },
+          "changedAt": { "type": "string", "description": "ISO 8601 timestamp when supplied by event publisher" }
         },
-        "required": ["path", "changedAt"]
+        "required": ["path", "operation"]
       }
     },
     {
