@@ -251,6 +251,25 @@ export interface ContributionWorkspaceItem {
   component: string;
 }
 
+export type RegisteredContribution<T> = T & {
+  pluginId: string;
+};
+
+export interface RegisteredContributionPoints {
+  views?: RegisteredContribution<ContributionView>[];
+  commands?: RegisteredContribution<ContributionCommand>[];
+  settingsPanels?: RegisteredContribution<ContributionSettingsPanel>[];
+  sidebarItems?: RegisteredContribution<ContributionSidebarItem>[];
+  fileActions?: RegisteredContribution<ContributionAction>[];
+  noteActions?: RegisteredContribution<ContributionAction>[];
+  contextMenuEntries?: RegisteredContribution<ContributionContextMenuEntry>[];
+  searchProviders?: RegisteredContribution<ContributionSearchProvider>[];
+  activityProviders?: RegisteredContribution<ContributionActivityProvider>[];
+  statusBarItems?: RegisteredContribution<ContributionStatusBarItem>[];
+  openProviders?: RegisteredContribution<ContributionOpenProvider>[];
+  workspaceItems?: RegisteredContribution<ContributionWorkspaceItem>[];
+}
+
 export interface OpenResourceContext {
   sourcePluginId?: string;
   sourceView?: 'files' | 'notes' | string;
@@ -377,6 +396,52 @@ export interface NoteSavedEvent extends VerstakEvent {
     path: string;
     caseId?: string;
     savedAt: string;
+  };
+}
+
+export interface WorkspaceCreatedEvent extends VerstakEvent {
+  name: 'workspace.created';
+  payload: {
+    operation: 'create';
+    workspaceRootPath: string;
+    workspaceName: string;
+    title?: string;
+    templateId?: string;
+  };
+}
+
+export interface WorkspaceRenamedEvent extends VerstakEvent {
+  name: 'workspace.renamed';
+  payload: {
+    operation: 'rename';
+    workspaceRootPath: string;
+    workspaceName: string;
+    previousWorkspaceRootPath: string;
+    previousWorkspaceName: string;
+    title?: string;
+  };
+}
+
+export interface WorkspaceTrashedEvent extends VerstakEvent {
+  name: 'workspace.trashed';
+  payload: {
+    operation: 'trash';
+    workspaceRootPath: string;
+    workspaceName: string;
+    title?: string;
+    trashId: string;
+    trashPath: string;
+    deletedAt: string;
+  };
+}
+
+export interface WorkspaceSelectedEvent extends VerstakEvent {
+  name: 'workspace.selected';
+  payload: {
+    operation: 'select';
+    workspaceRootPath: string;
+    workspaceName: string;
+    title?: string;
   };
 }
 

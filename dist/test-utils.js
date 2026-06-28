@@ -1,4 +1,8 @@
 // Verstak Plugin SDK — Test Utilities
+const mockCommandHandlers = new Map();
+function commandKey(pluginId, commandId) {
+    return `${pluginId}:${commandId}`;
+}
 /**
  * Создать тестовый manifest для unit-тестов.
  */
@@ -34,7 +38,7 @@ export function createTestPluginState(overrides) {
 /**
  * Создать заглушку VerstakPluginAPI для тестов.
  */
-export function createMockPluginAPI(pluginId = 'test.plugin') {
+export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
     const settings = {};
     const commands = new Map();
     const eventHandlers = new Map();
@@ -104,14 +108,37 @@ export function createMockPluginAPI(pluginId = 'test.plugin') {
         commands: {
             register: vi.fn(async (commandId, handler) => {
                 commands.set(commandId, handler);
-                return () => { commands.delete(commandId); };
+                mockCommandHandlers.set(commandKey(pluginId, commandId), handler);
+                return () => {
+                    commands.delete(commandId);
+                    mockCommandHandlers.delete(commandKey(pluginId, commandId));
+                };
             }),
             execute: vi.fn(async (commandId, args = {}) => {
                 const handler = commands.get(commandId);
                 if (!handler) {
                     throw new Error(`declared-but-unhandled: ${commandId}`);
                 }
-                return { status: 'handled', pluginId, commandId, result: await handler(args) };
+                return { status: 'handled', pluginId, commandId, result: await handler(args, { status: 'declared', pluginId, commandId, args }) };
+            }),
+            executeFor: vi.fn(async (targetPluginId, commandId, args = {}) => {
+                const handler = mockCommandHandlers.get(commandKey(targetPluginId, commandId));
+                if (!handler) {
+                    throw new Error(`declared-but-unhandled: ${targetPluginId}:${commandId}`);
+                }
+                return {
+                    status: 'handled',
+                    pluginId: targetPluginId,
+                    commandId,
+                    result: await handler(args, { status: 'declared', pluginId: targetPluginId, commandId, args }),
+                };
+            }),
+        },
+        contributions: {
+            list: vi.fn(async (point) => {
+                if (!point)
+                    return { ...(options.contributions || {}) };
+                return ([...((options.contributions && options.contributions[point]) || [])]);
             }),
         },
         events: {

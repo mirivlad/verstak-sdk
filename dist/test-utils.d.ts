@@ -1,5 +1,8 @@
-import type { PluginManifest, PluginState } from './types';
+import type { PluginManifest, PluginState, RegisteredContributionPoints } from './types';
 import type { VerstakPluginAPI } from './plugin-api';
+export interface MockPluginAPIOptions {
+    contributions?: RegisteredContributionPoints;
+}
 /**
  * Создать тестовый manifest для unit-тестов.
  */
@@ -11,7 +14,7 @@ export declare function createTestPluginState(overrides?: Partial<PluginState>):
 /**
  * Создать заглушку VerstakPluginAPI для тестов.
  */
-export declare function createMockPluginAPI(pluginId?: string): VerstakPluginAPI;
+export declare function createMockPluginAPI(pluginId?: string, options?: MockPluginAPIOptions): VerstakPluginAPI;
 /**
  * Валидатор plugin manifest.
  */

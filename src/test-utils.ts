@@ -1,7 +1,17 @@
 // Verstak Plugin SDK — Test Utilities
 
-import type { PluginManifest, PluginState } from './types';
-import type { VerstakPluginAPI } from './plugin-api';
+import type { PluginManifest, PluginState, RegisteredContributionPoints } from './types';
+import type { PluginCommandHandler, VerstakPluginAPI } from './plugin-api';
+
+const mockCommandHandlers = new Map<string, PluginCommandHandler>();
+
+function commandKey(pluginId: string, commandId: string): string {
+  return `${pluginId}:${commandId}`;
+}
+
+export interface MockPluginAPIOptions {
+  contributions?: RegisteredContributionPoints;
+}
 
 /**
  * Создать тестовый manifest для unit-тестов.
@@ -40,9 +50,9 @@ export function createTestPluginState(overrides?: Partial<PluginState>): PluginS
 /**
  * Создать заглушку VerstakPluginAPI для тестов.
  */
-export function createMockPluginAPI(pluginId = 'test.plugin'): VerstakPluginAPI {
+export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPluginAPIOptions = {}): VerstakPluginAPI {
   const settings: Record<string, unknown> = {};
-  const commands = new Map<string, (args: Record<string, unknown>) => unknown>();
+  const commands = new Map<string, PluginCommandHandler>();
   const eventHandlers = new Map<string, Array<(event: any) => void>>();
   const files = new Map<string, { type: 'file' | 'folder'; content?: string; modifiedAt: string }>();
   files.set('', { type: 'folder', modifiedAt: new Date().toISOString() });
@@ -107,17 +117,39 @@ export function createMockPluginAPI(pluginId = 'test.plugin'): VerstakPluginAPI 
       list: vi.fn(async () => []),
     },
     commands: {
-      register: vi.fn(async (commandId: string, handler: (args: Record<string, unknown>) => unknown) => {
+      register: vi.fn(async (commandId: string, handler: PluginCommandHandler) => {
         commands.set(commandId, handler);
-        return () => { commands.delete(commandId); };
+        mockCommandHandlers.set(commandKey(pluginId, commandId), handler);
+        return () => {
+          commands.delete(commandId);
+          mockCommandHandlers.delete(commandKey(pluginId, commandId));
+        };
       }),
       execute: vi.fn(async (commandId: string, args: Record<string, unknown> = {}) => {
         const handler = commands.get(commandId);
         if (!handler) {
           throw new Error(`declared-but-unhandled: ${commandId}`);
         }
-        return { status: 'handled' as const, pluginId, commandId, result: await handler(args) };
+        return { status: 'handled' as const, pluginId, commandId, result: await handler(args, { status: 'declared', pluginId, commandId, args }) };
       }),
+      executeFor: vi.fn(async (targetPluginId: string, commandId: string, args: Record<string, unknown> = {}) => {
+        const handler = mockCommandHandlers.get(commandKey(targetPluginId, commandId));
+        if (!handler) {
+          throw new Error(`declared-but-unhandled: ${targetPluginId}:${commandId}`);
+        }
+        return {
+          status: 'handled' as const,
+          pluginId: targetPluginId,
+          commandId,
+          result: await handler(args, { status: 'declared', pluginId: targetPluginId, commandId, args }),
+        };
+      }),
+    },
+    contributions: {
+      list: vi.fn(async (point?: keyof RegisteredContributionPoints) => {
+        if (!point) return { ...(options.contributions || {}) };
+        return ([...((options.contributions && options.contributions[point]) || [])]) as any;
+      }) as VerstakPluginAPI['contributions']['list'],
     },
     events: {
       publish: vi.fn(async (eventName: string, payload: Record<string, unknown> = {}) => {

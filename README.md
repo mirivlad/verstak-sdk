@@ -10,7 +10,8 @@ for that host-provided object:
 
 - `settings.read/write/writeAll`
 - `capabilities.list/get/has`
-- `commands.register/execute`
+- `commands.register/execute/executeFor`
+- `contributions.list`
 - `events.publish/subscribe`
 - `files.list/metadata/readText/writeText/createFolder/move/trash`
 - `workbench.openResource/editResource`
@@ -25,6 +26,15 @@ Open/edit routing uses `OpenResourceRequest` with `kind: "vault-file"` and
 contexts `generic-text`, `generic-markdown`, and `notes-markdown`. Plugins that
 request routing declare `workbench.open`; editor/viewer plugins contribute
 `contributes.openProviders`. A no-match route returns `status: "no-provider"`.
+
+`contributions.list(point)` returns host-flattened contribution records with
+`pluginId`. Files and Notes use this with `commands.executeFor(pluginId,
+handler, args)` to run action providers declared by other plugins.
+
+Workspace lifecycle events are `workspace.created`, `workspace.renamed`,
+`workspace.trashed`, and `workspace.selected`. Payloads include
+`workspaceRootPath` and `workspaceName`; rename/trash events include previous
+or trash metadata.
 
 Bundled frontend plugins are trusted/cooperative and run in the desktop JS
 context. Current permission checks are contract checks, not a security boundary;

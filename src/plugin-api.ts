@@ -13,6 +13,7 @@ import type {
   OpenResourceRequest,
   OpenResourceResult,
   PluginSettings,
+  RegisteredContributionPoints,
   TrashResult,
   WriteTextOptions,
 } from './types';
@@ -88,6 +89,14 @@ export interface VerstakPluginAPI {
   commands: {
     register(commandId: string, handler: PluginCommandHandler): Promise<Unsubscribe>;
     execute(commandId: string, args?: PluginCommandArgs): Promise<PluginCommandResult>;
+    executeFor(targetPluginId: string, commandId: string, args?: PluginCommandArgs): Promise<PluginCommandResult>;
+  };
+
+  contributions: {
+    list(): Promise<RegisteredContributionPoints>;
+    list<K extends keyof RegisteredContributionPoints>(
+      point: K
+    ): Promise<NonNullable<RegisteredContributionPoints[K]>>;
   };
 
   events: {

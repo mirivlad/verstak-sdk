@@ -72,6 +72,68 @@
       }
     },
     {
+      "name": "workspace.created",
+      "description": "A top-level workspace folder has been created",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "operation": { "type": "string", "const": "create" },
+          "workspaceRootPath": { "type": "string", "description": "Vault-relative top-level workspace folder" },
+          "workspaceName": { "type": "string", "description": "Workspace display/canonical folder name" },
+          "title": { "type": "string", "description": "Activity title" },
+          "templateId": { "type": "string", "description": "Template applied during creation, if any" }
+        },
+        "required": ["operation", "workspaceRootPath", "workspaceName"]
+      }
+    },
+    {
+      "name": "workspace.renamed",
+      "description": "A top-level workspace folder has been renamed",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "operation": { "type": "string", "const": "rename" },
+          "workspaceRootPath": { "type": "string", "description": "New workspace root folder" },
+          "workspaceName": { "type": "string", "description": "New workspace name" },
+          "previousWorkspaceRootPath": { "type": "string", "description": "Previous workspace root folder" },
+          "previousWorkspaceName": { "type": "string", "description": "Previous workspace name" },
+          "title": { "type": "string", "description": "Activity title" }
+        },
+        "required": ["operation", "workspaceRootPath", "workspaceName", "previousWorkspaceRootPath", "previousWorkspaceName"]
+      }
+    },
+    {
+      "name": "workspace.trashed",
+      "description": "A top-level workspace folder has been moved to internal trash",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "operation": { "type": "string", "const": "trash" },
+          "workspaceRootPath": { "type": "string", "description": "Workspace root folder before trash" },
+          "workspaceName": { "type": "string", "description": "Workspace name before trash" },
+          "title": { "type": "string", "description": "Activity title" },
+          "trashId": { "type": "string", "description": "Internal trash item identifier" },
+          "trashPath": { "type": "string", "description": "Vault-relative trash path" },
+          "deletedAt": { "type": "string", "description": "ISO 8601 timestamp" }
+        },
+        "required": ["operation", "workspaceRootPath", "workspaceName", "trashId", "trashPath", "deletedAt"]
+      }
+    },
+    {
+      "name": "workspace.selected",
+      "description": "The current workspace selection has changed",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "operation": { "type": "string", "const": "select" },
+          "workspaceRootPath": { "type": "string", "description": "Selected workspace root folder" },
+          "workspaceName": { "type": "string", "description": "Selected workspace name" },
+          "title": { "type": "string", "description": "Activity title" }
+        },
+        "required": ["operation", "workspaceRootPath", "workspaceName"]
+      }
+    },
+    {
       "name": "file.added",
       "description": "A file has been added to the vault",
       "schema": {

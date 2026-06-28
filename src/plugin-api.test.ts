@@ -14,6 +14,8 @@ describe('VerstakPluginAPI contract', () => {
     expect(typeof api.capabilities.list).toBe('function');
     expect(typeof api.commands.register).toBe('function');
     expect(typeof api.commands.execute).toBe('function');
+    expect(typeof api.commands.executeFor).toBe('function');
+    expect(typeof api.contributions.list).toBe('function');
     expect(typeof api.events.publish).toBe('function');
     expect(typeof api.events.subscribe).toBe('function');
     expect(typeof api.files.list).toBe('function');
@@ -186,6 +188,32 @@ describe('VerstakPluginAPI contract', () => {
 
     unregister();
     await expect(api.commands.execute('cmd.plugin.echo', {})).rejects.toThrow('declared-but-unhandled');
+  });
+
+  test('contributions list and provider command execution', async () => {
+    const api = createMockPluginAPI('consumer.plugin', {
+      contributions: {
+        fileActions: [{
+          pluginId: 'provider.plugin',
+          id: 'provider.file.action',
+          label: 'Provider File Action',
+          handler: 'provider.command',
+        }],
+      },
+    });
+    const providerApi = createMockPluginAPI('provider.plugin');
+
+    await providerApi.commands.register('provider.command', async (args) => args.path);
+
+    await expect(api.contributions.list('fileActions')).resolves.toEqual([
+      expect.objectContaining({ pluginId: 'provider.plugin', id: 'provider.file.action' }),
+    ]);
+    await expect(api.commands.executeFor('provider.plugin', 'provider.command', { path: 'Docs/readme.md' })).resolves.toEqual({
+      status: 'handled',
+      pluginId: 'provider.plugin',
+      commandId: 'provider.command',
+      result: 'Docs/readme.md',
+    });
   });
 
   test('events publish to subscribers and unsubscribe cleanly', async () => {
