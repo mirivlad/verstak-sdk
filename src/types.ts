@@ -141,6 +141,11 @@ export interface TrashResult {
   deletedAt: string;
 }
 
+export interface TrashEntry extends TrashResult {
+  originalType: FileEntry['type'];
+  basename: string;
+}
+
 // ─── Contribution Points ─────────────────────────────────────
 
 export interface ContributionPoints {

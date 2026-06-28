@@ -13,7 +13,7 @@ for that host-provided object:
 - `commands.register/execute/executeFor`
 - `contributions.list`
 - `events.publish/subscribe`
-- `files.list/metadata/readText/writeText/createFolder/move/trash`
+- `files.list/metadata/readText/writeText/createFolder/move/trash/listTrash`
 - `workbench.openResource/editResource`
 - optional `dispose`
 

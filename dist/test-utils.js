@@ -43,6 +43,7 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
     const commands = new Map();
     const eventHandlers = new Map();
     const files = new Map();
+    const trashEntries = [];
     files.set('', { type: 'folder', modifiedAt: new Date().toISOString() });
     function normalizePath(path, allowRoot = false) {
         const raw = String(path || '');
@@ -228,17 +229,23 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
             }),
             trash: vi.fn(async (relativePath) => {
                 const path = normalizePath(relativePath);
-                if (!files.has(path))
+                const node = files.get(path);
+                if (!node)
                     throw new Error(`not-found: ${path}`);
-                files.delete(path);
                 const trashId = `mock-${Date.now()}`;
-                return {
+                const entry = {
                     originalPath: path,
                     trashPath: `.verstak/trash/files/${trashId}/${baseName(path)}`,
                     trashId,
                     deletedAt: new Date().toISOString(),
+                    originalType: node.type,
+                    basename: baseName(path),
                 };
+                files.delete(path);
+                trashEntries.unshift(entry);
+                return entry;
             }),
+            listTrash: vi.fn(async () => trashEntries.slice()),
             openExternal: vi.fn(async (relativePath) => {
                 const path = normalizePath(relativePath);
                 if (!files.has(path))

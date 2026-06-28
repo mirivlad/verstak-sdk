@@ -55,6 +55,7 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
   const commands = new Map<string, PluginCommandHandler>();
   const eventHandlers = new Map<string, Array<(event: any) => void>>();
   const files = new Map<string, { type: 'file' | 'folder'; content?: string; modifiedAt: string }>();
+  const trashEntries: Array<{ originalPath: string; trashPath: string; trashId: string; deletedAt: string; originalType: 'file' | 'folder'; basename: string }> = [];
   files.set('', { type: 'folder', modifiedAt: new Date().toISOString() });
 
   function normalizePath(path: string, allowRoot = false): string {
@@ -225,16 +226,22 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
       }),
       trash: vi.fn(async (relativePath: string) => {
         const path = normalizePath(relativePath);
-        if (!files.has(path)) throw new Error(`not-found: ${path}`);
-        files.delete(path);
+        const node = files.get(path);
+        if (!node) throw new Error(`not-found: ${path}`);
         const trashId = `mock-${Date.now()}`;
-        return {
+        const entry = {
           originalPath: path,
           trashPath: `.verstak/trash/files/${trashId}/${baseName(path)}`,
           trashId,
           deletedAt: new Date().toISOString(),
+          originalType: node.type,
+          basename: baseName(path),
         };
+        files.delete(path);
+        trashEntries.unshift(entry);
+        return entry;
       }),
+      listTrash: vi.fn(async () => trashEntries.slice()),
       openExternal: vi.fn(async (relativePath: string) => {
         const path = normalizePath(relativePath);
         if (!files.has(path)) throw new Error(`not-found: ${path}`);

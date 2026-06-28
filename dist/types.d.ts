@@ -94,6 +94,10 @@ export interface TrashResult {
     trashId: string;
     deletedAt: string;
 }
+export interface TrashEntry extends TrashResult {
+    originalType: FileEntry['type'];
+    basename: string;
+}
 export interface ContributionPoints {
     views?: ContributionView[];
     commands?: ContributionCommand[];
