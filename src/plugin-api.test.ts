@@ -12,6 +12,8 @@ describe('VerstakPluginAPI contract', () => {
     expect(api.pluginId).toBe('verstak.platform-test');
     expect(typeof api.settings.read).toBe('function');
     expect(typeof api.settings.write).toBe('function');
+    expect(typeof api.storage.data.read).toBe('function');
+    expect(typeof api.storage.data.write).toBe('function');
     expect(typeof api.capabilities.list).toBe('function');
     expect(typeof api.commands.register).toBe('function');
     expect(typeof api.commands.execute).toBe('function');
@@ -188,6 +190,25 @@ describe('VerstakPluginAPI contract', () => {
 
     await expect(api.settings.read('savedText')).resolves.toBe('hello');
     await expect(api.settings.read()).resolves.toEqual({ savedText: 'hello' });
+  });
+
+  test('plugin data persists separately from settings in the mock API namespace', async () => {
+    const api = createMockPluginAPI('storage.plugin');
+
+    await api.settings.write('search-index', { source: 'settings' });
+    await api.storage.data.write('search-index', {
+      version: 1,
+      workspaceRootPath: 'Project',
+      entries: [{ path: 'Project/Docs/case.md' }],
+    });
+
+    await expect(api.storage.data.read('search-index')).resolves.toEqual({
+      version: 1,
+      workspaceRootPath: 'Project',
+      entries: [{ path: 'Project/Docs/case.md' }],
+    });
+    await expect(api.settings.read('search-index')).resolves.toEqual({ source: 'settings' });
+    await expect(api.storage.data.read('missing')).resolves.toEqual({});
   });
 
   test('commands register, execute, and unregister', async () => {

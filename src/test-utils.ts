@@ -52,6 +52,7 @@ export function createTestPluginState(overrides?: Partial<PluginState>): PluginS
  */
 export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPluginAPIOptions = {}): VerstakPluginAPI {
   const settings: Record<string, unknown> = {};
+  const pluginData = new Map<string, Record<string, unknown>>();
   const commands = new Map<string, PluginCommandHandler>();
   const eventHandlers = new Map<string, Array<(event: any) => void>>();
   const files = new Map<string, { type: 'file' | 'folder'; content?: string; modifiedAt: string }>();
@@ -128,6 +129,14 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
         Object.keys(settings).forEach((key) => delete settings[key]);
         Object.assign(settings, nextSettings);
       }),
+    },
+    storage: {
+      data: {
+        read: vi.fn(async (name: string) => ({ ...(pluginData.get(name) || {}) })),
+        write: vi.fn(async (name: string, data: Record<string, unknown>) => {
+          pluginData.set(name, { ...(data || {}) });
+        }),
+      },
     },
     capabilities: {
       has: vi.fn(async () => false),

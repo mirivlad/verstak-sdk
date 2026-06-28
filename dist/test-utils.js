@@ -40,6 +40,7 @@ export function createTestPluginState(overrides) {
  */
 export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
     const settings = {};
+    const pluginData = new Map();
     const commands = new Map();
     const eventHandlers = new Map();
     const files = new Map();
@@ -116,6 +117,14 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
                 Object.keys(settings).forEach((key) => delete settings[key]);
                 Object.assign(settings, nextSettings);
             }),
+        },
+        storage: {
+            data: {
+                read: vi.fn(async (name) => ({ ...(pluginData.get(name) || {}) })),
+                write: vi.fn(async (name, data) => {
+                    pluginData.set(name, { ...(data || {}) });
+                }),
+            },
         },
         capabilities: {
             has: vi.fn(async () => false),

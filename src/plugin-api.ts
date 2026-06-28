@@ -22,6 +22,7 @@ import type {
 } from './types';
 
 export type PluginCommandArgs = Record<string, unknown>;
+export type PluginDataJSON = Record<string, unknown>;
 export type PluginCommandHandler = (
   args: PluginCommandArgs,
   declaration: PluginCommandDeclaration
@@ -94,6 +95,13 @@ export interface VerstakPluginAPI {
     read<T = unknown>(key: string): Promise<T | undefined>;
     write(key: string, value: unknown): Promise<PluginSettings>;
     writeAll(settings: PluginSettings): Promise<void>;
+  };
+
+  storage: {
+    data: {
+      read(name: string): Promise<PluginDataJSON>;
+      write(name: string, data: PluginDataJSON): Promise<void>;
+    };
   };
 
   capabilities: {

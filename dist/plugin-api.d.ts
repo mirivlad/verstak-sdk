@@ -1,5 +1,6 @@
 import type { CapabilityEntry, FileBytes, FileEntry, FileMetadata, MovePathOptions, OpenResourceRequest, OpenResourceResult, PluginSettings, RegisteredContributionPoints, RestoreTrashOptions, TrashEntry, TrashResult, WriteTextOptions } from './types';
 export type PluginCommandArgs = Record<string, unknown>;
+export type PluginDataJSON = Record<string, unknown>;
 export type PluginCommandHandler = (args: PluginCommandArgs, declaration: PluginCommandDeclaration) => unknown | Promise<unknown>;
 export type Unsubscribe = () => void;
 export interface PluginCommandDeclaration {
@@ -61,6 +62,12 @@ export interface VerstakPluginAPI {
         read<T = unknown>(key: string): Promise<T | undefined>;
         write(key: string, value: unknown): Promise<PluginSettings>;
         writeAll(settings: PluginSettings): Promise<void>;
+    };
+    storage: {
+        data: {
+            read(name: string): Promise<PluginDataJSON>;
+            write(name: string, data: PluginDataJSON): Promise<void>;
+        };
     };
     capabilities: {
         has(capability: string): Promise<boolean>;
