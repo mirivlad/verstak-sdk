@@ -122,6 +122,13 @@ export interface FileMetadata {
   canWrite: boolean;
 }
 
+export interface FileBytes {
+  relativePath: string;
+  size: number;
+  mimeHint: string;
+  dataBase64: string;
+}
+
 export interface WriteTextOptions {
   /** Create the file when it is missing. Parent folder must already exist. */
   createIfMissing?: boolean;

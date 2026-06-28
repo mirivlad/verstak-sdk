@@ -13,14 +13,15 @@ for that host-provided object:
 - `commands.register/execute/executeFor`
 - `contributions.list`
 - `events.publish/subscribe`
-- `files.list/metadata/readText/writeText/createFolder/move/trash/listTrash/restoreTrash`
+- `files.list/metadata/readText/readBytes/writeText/createFolder/move/trash/listTrash/restoreTrash`
 - `workbench.openResource/editResource`
 - optional `dispose`
 
 Files paths are canonical vault-relative slash paths. Backslashes, Windows/UNC
 absolute paths, traversal, null bytes, `.verstak` variants, and symlink
-read/write/move/trash operations are rejected by the host. Files read/write is
-UTF-8 text-only in the current runtime.
+read/write/move/trash operations are rejected by the host. Text read/write is
+UTF-8 only; `readText` is limited to 2 MB and `readBytes` returns a bounded
+base64 payload for regular files up to 8 MB.
 
 Open/edit routing uses `OpenResourceRequest` with `kind: "vault-file"` and
 contexts `generic-text`, `generic-markdown`, and `notes-markdown`. Plugins that

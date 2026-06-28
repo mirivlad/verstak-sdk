@@ -22,6 +22,7 @@ describe('VerstakPluginAPI contract', () => {
     expect(typeof api.files.list).toBe('function');
     expect(typeof api.files.metadata).toBe('function');
     expect(typeof api.files.readText).toBe('function');
+    expect(typeof api.files.readBytes).toBe('function');
     expect(typeof api.files.writeText).toBe('function');
     expect(typeof api.files.createFolder).toBe('function');
     expect(typeof api.files.move).toBe('function');
@@ -250,6 +251,12 @@ describe('VerstakPluginAPI contract', () => {
     await api.files.createFolder('PlatformTest');
     await api.files.writeText('PlatformTest/one.txt', 'hello', { createIfMissing: true });
     await expect(api.files.readText('PlatformTest/one.txt')).resolves.toBe('hello');
+    await expect(api.files.readBytes('PlatformTest/one.txt')).resolves.toEqual({
+      relativePath: 'PlatformTest/one.txt',
+      size: 5,
+      mimeHint: 'text/plain; charset=utf-8',
+      dataBase64: 'aGVsbG8=',
+    });
     await expect(api.files.list('PlatformTest')).resolves.toEqual([
       expect.objectContaining({ relativePath: 'PlatformTest/one.txt', type: 'file' }),
     ]);

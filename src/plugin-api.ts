@@ -7,6 +7,7 @@
 
 import type {
   CapabilityEntry,
+  FileBytes,
   FileEntry,
   FileMetadata,
   MovePathOptions,
@@ -118,6 +119,7 @@ export interface VerstakPluginAPI {
     list(relativeDir?: string): Promise<FileEntry[]>;
     metadata(relativePath: string): Promise<FileMetadata>;
     readText(relativePath: string): Promise<string>;
+    readBytes(relativePath: string): Promise<FileBytes>;
     writeText(relativePath: string, content: string, options?: WriteTextOptions): Promise<void>;
     createFolder(relativePath: string): Promise<void>;
     move(fromRelativePath: string, toRelativePath: string, options?: MovePathOptions): Promise<void>;

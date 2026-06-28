@@ -1,4 +1,4 @@
-import type { CapabilityEntry, FileEntry, FileMetadata, MovePathOptions, OpenResourceRequest, OpenResourceResult, PluginSettings, RegisteredContributionPoints, RestoreTrashOptions, TrashEntry, TrashResult, WriteTextOptions } from './types';
+import type { CapabilityEntry, FileBytes, FileEntry, FileMetadata, MovePathOptions, OpenResourceRequest, OpenResourceResult, PluginSettings, RegisteredContributionPoints, RestoreTrashOptions, TrashEntry, TrashResult, WriteTextOptions } from './types';
 export type PluginCommandArgs = Record<string, unknown>;
 export type PluginCommandHandler = (args: PluginCommandArgs, declaration: PluginCommandDeclaration) => unknown | Promise<unknown>;
 export type Unsubscribe = () => void;
@@ -82,6 +82,7 @@ export interface VerstakPluginAPI {
         list(relativeDir?: string): Promise<FileEntry[]>;
         metadata(relativePath: string): Promise<FileMetadata>;
         readText(relativePath: string): Promise<string>;
+        readBytes(relativePath: string): Promise<FileBytes>;
         writeText(relativePath: string, content: string, options?: WriteTextOptions): Promise<void>;
         createFolder(relativePath: string): Promise<void>;
         move(fromRelativePath: string, toRelativePath: string, options?: MovePathOptions): Promise<void>;

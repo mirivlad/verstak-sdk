@@ -82,6 +82,22 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
     return idx === -1 ? path : path.slice(idx + 1);
   }
 
+  function base64FromString(value: string): string {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    let result = '';
+    let i = 0;
+    while (i < value.length) {
+      const a = value.charCodeAt(i++) & 0xff;
+      const b = i < value.length ? value.charCodeAt(i++) & 0xff : NaN;
+      const c = i < value.length ? value.charCodeAt(i++) & 0xff : NaN;
+      result += alphabet[a >> 2];
+      result += alphabet[((a & 3) << 4) | (Number.isNaN(b) ? 0 : b >> 4)];
+      result += Number.isNaN(b) ? '=' : alphabet[((b & 15) << 2) | (Number.isNaN(c) ? 0 : c >> 6)];
+      result += Number.isNaN(c) ? '=' : alphabet[c & 63];
+    }
+    return result;
+  }
+
   function entry(path: string, node: { type: 'file' | 'folder'; content?: string; modifiedAt: string }) {
     const name = baseName(path);
     const dot = name.lastIndexOf('.');
@@ -189,6 +205,19 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
         if (!node) throw new Error(`not-found: ${path}`);
         if (node.type !== 'file') throw new Error(`not-regular-file: ${path}`);
         return node.content || '';
+      }),
+      readBytes: vi.fn(async (relativePath: string) => {
+        const path = normalizePath(relativePath);
+        const node = files.get(path);
+        if (!node) throw new Error(`not-found: ${path}`);
+        if (node.type !== 'file') throw new Error(`not-regular-file: ${path}`);
+        const content = node.content || '';
+        return {
+          relativePath: path,
+          size: content.length,
+          mimeHint: path.toLowerCase().endsWith('.txt') ? 'text/plain; charset=utf-8' : '',
+          dataBase64: base64FromString(content),
+        };
       }),
       writeText: vi.fn(async (relativePath: string, content: string, options = {}) => {
         const path = normalizePath(relativePath);
