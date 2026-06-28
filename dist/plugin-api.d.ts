@@ -35,11 +35,23 @@ export interface SyncStatus {
     lastError: string;
     statusLabel: string;
 }
+export interface SyncConflict {
+    op_id?: string;
+    opId?: string;
+    entity_type?: string;
+    entityType?: string;
+    entity_id?: string;
+    entityId?: string;
+    path?: string;
+    reason?: string;
+    message?: string;
+    [key: string]: unknown;
+}
 export interface SyncNowResult {
     pushed: number;
     pulled: number;
     serverSequence: number;
-    conflicts?: unknown[];
+    conflicts?: SyncConflict[];
     applyErrors?: string[];
 }
 export interface VerstakPluginAPI {
