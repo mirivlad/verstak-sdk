@@ -4,7 +4,7 @@ import capabilitiesSchema from '../schemas/capabilities.json';
 import manifestSchema from '../schemas/manifest.json';
 import permissionsSchema from '../schemas/permissions.json';
 import vaultEventsSchema from '../schemas/events/vault.json';
-import type { OpenResourceRequest, PluginManifest } from './types';
+import type { OpenProviderSupport, OpenResourceRequest, PluginManifest } from './types';
 import { createMockPluginAPI } from './test-utils';
 
 describe('VerstakPluginAPI contract', () => {
@@ -150,6 +150,18 @@ describe('VerstakPluginAPI contract', () => {
     expect(manifest.contributes?.openProviders?.[0].supports[0].contexts).toContain('notes-markdown');
     expect(manifest.contributes?.openProviders?.[0].supports[0].modes).toContain('view');
     expect(manifest.contributes?.openProviders?.[0].supports[1].contexts).toContain('generic-text');
+  });
+
+  test('secret links are valid workbench open-provider resources', () => {
+    const supportSchema = (manifestSchema as any).$defs.OpenProviderSupport;
+    expect(supportSchema.properties.kind.enum).toEqual(expect.arrayContaining(['vault-file', 'secret']));
+
+    const support: OpenProviderSupport = {
+      kind: 'secret',
+      modes: ['view'],
+    };
+
+    expect(support.kind).toBe('secret');
   });
 
   test('OpenResourceRequest and no-provider result shape are typed', () => {

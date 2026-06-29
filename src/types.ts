@@ -243,7 +243,7 @@ export interface ContributionStatusBarItem {
   handler?: string;
 }
 
-export type OpenResourceKind = 'vault-file';
+export type OpenResourceKind = 'vault-file' | 'secret';
 export type OpenResourceMode = 'view' | 'edit';
 export type OpenResourceContextName = 'generic-text' | 'generic-markdown' | 'notes-markdown' | string;
 

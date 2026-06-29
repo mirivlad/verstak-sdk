@@ -380,7 +380,7 @@
       "properties": {
         "kind": {
           "type": "string",
-          "enum": ["vault-file"]
+          "enum": ["vault-file", "secret"]
         },
         "extensions": {
           "type": "array",

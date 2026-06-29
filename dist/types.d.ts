@@ -181,7 +181,7 @@ export interface ContributionStatusBarItem {
     position?: 'left' | 'right';
     handler?: string;
 }
-export type OpenResourceKind = 'vault-file';
+export type OpenResourceKind = 'vault-file' | 'secret';
 export type OpenResourceMode = 'view' | 'edit';
 export type OpenResourceContextName = 'generic-text' | 'generic-markdown' | 'notes-markdown' | string;
 export interface OpenProviderSupport {
