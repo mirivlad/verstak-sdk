@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import capabilitiesSchema from '../schemas/capabilities.json';
 import manifestSchema from '../schemas/manifest.json';
+import permissionsSchema from '../schemas/permissions.json';
 import vaultEventsSchema from '../schemas/events/vault.json';
 import type { OpenResourceRequest, PluginManifest } from './types';
 import { createMockPluginAPI } from './test-utils';
@@ -51,6 +53,19 @@ describe('VerstakPluginAPI contract', () => {
     expect(permissionEnum).toContain('files.delete');
     expect(permissionEnum).toContain('files.openExternal');
     expect(permissionEnum).toContain('workbench.open');
+  });
+
+  test('secrets capability and permissions are declared as dangerous platform contract', () => {
+    const capabilities = ((capabilitiesSchema as any).capabilities || []) as Array<{ name: string; status: string }>;
+    const permissions = ((permissionsSchema as any).permissions || []) as Array<{ name: string; dangerous: boolean }>;
+    const permissionEnum = ((manifestSchema as any).properties.permissions.items.enum || []) as string[];
+
+    expect(capabilities).toContainEqual(expect.objectContaining({ name: 'secret-store', status: 'draft' }));
+    expect(capabilities).toContainEqual(expect.objectContaining({ name: 'secrets.read-ui', status: 'draft' }));
+    expect(capabilities).toContainEqual(expect.objectContaining({ name: 'secrets.write-ui', status: 'draft' }));
+    expect(permissions).toContainEqual(expect.objectContaining({ name: 'secrets.read', dangerous: true }));
+    expect(permissions).toContainEqual(expect.objectContaining({ name: 'secrets.write', dangerous: true }));
+    expect(permissionEnum).toEqual(expect.arrayContaining(['secrets.read', 'secrets.write']));
   });
 
   test('file.changed schema documents watcher refresh payload', () => {

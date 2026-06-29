@@ -88,6 +88,28 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
         }
         return result;
     }
+    function stringFromBase64(value) {
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+        const clean = String(value || '').replace(/\s+/g, '');
+        if (clean.length % 4 === 1)
+            throw new Error('invalid-base64');
+        let result = '';
+        for (let i = 0; i < clean.length; i += 4) {
+            const a = alphabet.indexOf(clean[i]);
+            const b = alphabet.indexOf(clean[i + 1]);
+            const c = clean[i + 2] === '=' ? -1 : alphabet.indexOf(clean[i + 2]);
+            const d = clean[i + 3] === '=' ? -1 : alphabet.indexOf(clean[i + 3]);
+            if (a < 0 || b < 0 || (clean[i + 2] !== '=' && c < 0) || (clean[i + 3] !== '=' && d < 0)) {
+                throw new Error('invalid-base64');
+            }
+            result += String.fromCharCode((a << 2) | (b >> 4));
+            if (c >= 0)
+                result += String.fromCharCode(((b & 15) << 4) | (c >> 2));
+            if (d >= 0)
+                result += String.fromCharCode(((c & 3) << 6) | d);
+        }
+        return result;
+    }
     function entry(path, node) {
         const name = baseName(path);
         const dot = name.lastIndexOf('.');
@@ -247,6 +269,20 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
                 if (!files.get(parent) || files.get(parent)?.type !== 'folder')
                     throw new Error(`parent-not-found: ${parent}`);
                 files.set(path, { type: 'file', content, modifiedAt: new Date().toISOString() });
+            }),
+            writeBytes: vi.fn(async (relativePath, dataBase64, options = {}) => {
+                const path = normalizePath(relativePath);
+                const node = files.get(path);
+                if (node && node.type !== 'file')
+                    throw new Error(`not-regular-file: ${path}`);
+                if (node && !options.overwrite)
+                    throw new Error(`conflict: ${path}`);
+                if (!node && !options.createIfMissing)
+                    throw new Error(`not-found: ${path}`);
+                const parent = parentPath(path);
+                if (!files.get(parent) || files.get(parent)?.type !== 'folder')
+                    throw new Error(`parent-not-found: ${parent}`);
+                files.set(path, { type: 'file', content: stringFromBase64(dataBase64), modifiedAt: new Date().toISOString() });
             }),
             createFolder: vi.fn(async (relativePath) => {
                 const path = normalizePath(relativePath);
