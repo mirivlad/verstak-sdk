@@ -146,6 +146,7 @@ export interface VerstakPluginAPI {
     readText(relativePath: string): Promise<string>;
     readBytes(relativePath: string): Promise<FileBytes>;
     writeText(relativePath: string, content: string, options?: WriteTextOptions): Promise<void>;
+    writeBytes(relativePath: string, dataBase64: string, options?: WriteTextOptions): Promise<void>;
     createFolder(relativePath: string): Promise<void>;
     move(fromRelativePath: string, toRelativePath: string, options?: MovePathOptions): Promise<void>;
     trash(relativePath: string): Promise<TrashResult>;

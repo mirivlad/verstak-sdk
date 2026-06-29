@@ -27,6 +27,7 @@ describe('VerstakPluginAPI contract', () => {
     expect(typeof api.files.readText).toBe('function');
     expect(typeof api.files.readBytes).toBe('function');
     expect(typeof api.files.writeText).toBe('function');
+    expect(typeof api.files.writeBytes).toBe('function');
     expect(typeof api.files.createFolder).toBe('function');
     expect(typeof api.files.move).toBe('function');
     expect(typeof api.files.trash).toBe('function');
@@ -286,6 +287,7 @@ describe('VerstakPluginAPI contract', () => {
 
     await api.files.createFolder('PlatformTest');
     await api.files.writeText('PlatformTest/one.txt', 'hello', { createIfMissing: true });
+    await api.files.writeBytes('PlatformTest/image.bin', 'AQID', { createIfMissing: true });
     await expect(api.files.readText('PlatformTest/one.txt')).resolves.toBe('hello');
     await expect(api.files.readBytes('PlatformTest/one.txt')).resolves.toEqual({
       relativePath: 'PlatformTest/one.txt',
@@ -293,9 +295,16 @@ describe('VerstakPluginAPI contract', () => {
       mimeHint: 'text/plain; charset=utf-8',
       dataBase64: 'aGVsbG8=',
     });
-    await expect(api.files.list('PlatformTest')).resolves.toEqual([
+    await expect(api.files.readBytes('PlatformTest/image.bin')).resolves.toEqual({
+      relativePath: 'PlatformTest/image.bin',
+      size: 3,
+      mimeHint: '',
+      dataBase64: 'AQID',
+    });
+    await expect(api.files.list('PlatformTest')).resolves.toEqual(expect.arrayContaining([
       expect.objectContaining({ relativePath: 'PlatformTest/one.txt', type: 'file' }),
-    ]);
+      expect.objectContaining({ relativePath: 'PlatformTest/image.bin', type: 'file' }),
+    ]));
     await expect(api.files.openExternal('PlatformTest/one.txt')).resolves.toBeUndefined();
     await expect(api.files.showInFolder('PlatformTest/one.txt')).resolves.toBeUndefined();
     await api.files.move('PlatformTest/one.txt', 'PlatformTest/two.txt');
@@ -308,9 +317,10 @@ describe('VerstakPluginAPI contract', () => {
       expect.objectContaining({ originalPath: 'PlatformTest/two.txt', trashId: trash.trashId }),
     ]);
     await expect(api.files.restoreTrash(trash.trashId)).resolves.toBe('PlatformTest/two.txt');
-    await expect(api.files.list('PlatformTest')).resolves.toEqual([
+    await expect(api.files.list('PlatformTest')).resolves.toEqual(expect.arrayContaining([
       expect.objectContaining({ relativePath: 'PlatformTest/two.txt', type: 'file' }),
-    ]);
+      expect.objectContaining({ relativePath: 'PlatformTest/image.bin', type: 'file' }),
+    ]));
     await expect(api.files.listTrash()).resolves.toEqual([]);
   });
 
