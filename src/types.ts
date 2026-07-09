@@ -82,7 +82,8 @@ export type Permission =
   | 'process.spawn'
   | 'secrets.read'
   | 'secrets.write'
-  | 'sync.participate';
+  | 'sync.participate'
+  | 'browser.receiver.manage';
 
 export interface PermissionEntry {
   name: Permission;

@@ -46,6 +46,7 @@
     { "name": "process.spawn", "description": "Spawn external processes", "dangerous": true },
     { "name": "secrets.read", "description": "Read secrets from the secret store", "dangerous": true },
     { "name": "secrets.write", "description": "Write secrets to the secret store", "dangerous": true },
-    { "name": "sync.participate", "description": "Participate in vault sync", "dangerous": true }
+    { "name": "sync.participate", "description": "Participate in vault sync", "dangerous": true },
+    { "name": "browser.receiver.manage", "description": "View and rotate the local browser receiver pairing token", "dangerous": true }
   ]
 }

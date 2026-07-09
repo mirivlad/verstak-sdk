@@ -55,6 +55,10 @@ export interface SyncNowResult {
     conflicts?: SyncConflict[];
     applyErrors?: string[];
 }
+export interface BrowserReceiverPairing {
+    receiverUrl: string;
+    receiverToken: string;
+}
 export interface VerstakPluginAPI {
     readonly pluginId: string;
     settings: {
@@ -127,6 +131,10 @@ export interface VerstakPluginAPI {
         setInterval(minutes: number): Promise<void>;
         resetKey(): Promise<void>;
         now(): Promise<SyncNowResult>;
+    };
+    browserReceiver: {
+        pairing(): Promise<BrowserReceiverPairing>;
+        rotateToken(): Promise<BrowserReceiverPairing>;
     };
     dispose?: () => void;
 }

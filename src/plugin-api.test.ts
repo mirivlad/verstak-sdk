@@ -43,6 +43,8 @@ describe('VerstakPluginAPI contract', () => {
     expect(typeof api.sync.configure).toBe('function');
     expect(typeof api.sync.resetKey).toBe('function');
     expect(typeof api.sync.now).toBe('function');
+    expect(typeof api.browserReceiver.pairing).toBe('function');
+    expect(typeof api.browserReceiver.rotateToken).toBe('function');
   });
 
   test('manifest schema accepts files permissions used by platform-test', () => {
@@ -66,6 +68,14 @@ describe('VerstakPluginAPI contract', () => {
     expect(permissions).toContainEqual(expect.objectContaining({ name: 'secrets.read', dangerous: true }));
     expect(permissions).toContainEqual(expect.objectContaining({ name: 'secrets.write', dangerous: true }));
     expect(permissionEnum).toEqual(expect.arrayContaining(['secrets.read', 'secrets.write']));
+  });
+
+  test('browser receiver token management is declared as a dangerous platform contract', () => {
+    const permissions = ((permissionsSchema as any).permissions || []) as Array<{ name: string; dangerous: boolean }>;
+    const permissionEnum = ((manifestSchema as any).properties.permissions.items.enum || []) as string[];
+
+    expect(permissions).toContainEqual(expect.objectContaining({ name: 'browser.receiver.manage', dangerous: true }));
+    expect(permissionEnum).toContain('browser.receiver.manage');
   });
 
   test('file.changed schema documents watcher refresh payload', () => {

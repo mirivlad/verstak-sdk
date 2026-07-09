@@ -87,6 +87,11 @@ export interface SyncNowResult {
   applyErrors?: string[];
 }
 
+export interface BrowserReceiverPairing {
+  receiverUrl: string;
+  receiverToken: string;
+}
+
 export interface VerstakPluginAPI {
   readonly pluginId: string;
 
@@ -169,6 +174,11 @@ export interface VerstakPluginAPI {
     setInterval(minutes: number): Promise<void>;
     resetKey(): Promise<void>;
     now(): Promise<SyncNowResult>;
+  };
+
+  browserReceiver: {
+    pairing(): Promise<BrowserReceiverPairing>;
+    rotateToken(): Promise<BrowserReceiverPairing>;
   };
 
   dispose?: () => void;

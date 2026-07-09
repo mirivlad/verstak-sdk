@@ -395,6 +395,16 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
       resetKey: vi.fn(async () => {}),
       now: vi.fn(async () => ({ pushed: 0, pulled: 0, serverSequence: 0 })),
     },
+    browserReceiver: {
+      pairing: vi.fn(async () => ({
+        receiverUrl: 'http://127.0.0.1:47731/api/browser-inbox/v1/captures',
+        receiverToken: 'mock-browser-receiver-token',
+      })),
+      rotateToken: vi.fn(async () => ({
+        receiverUrl: 'http://127.0.0.1:47731/api/browser-inbox/v1/captures',
+        receiverToken: 'mock-browser-receiver-token-rotated',
+      })),
+    },
     dispose: vi.fn(),
   };
 }
