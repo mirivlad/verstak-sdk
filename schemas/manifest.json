@@ -51,6 +51,31 @@
       "type": "string",
       "description": "Path to plugin icon (relative to plugin root)"
     },
+    "localization": {
+      "type": "object",
+      "description": "Plugin-owned localization catalogs",
+      "properties": {
+        "defaultLocale": {
+          "type": "string",
+          "description": "Default locale used when the selected locale is unavailable",
+          "pattern": "^[a-z]{2}(?:-[a-z0-9]+)*$"
+        },
+        "locales": {
+          "type": "object",
+          "description": "Locale tags mapped to plugin-relative JSON catalog paths",
+          "propertyNames": {
+            "pattern": "^[a-z]{2}(?:-[a-z0-9]+)*$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^(?![\\\\/])(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"
+          },
+          "minProperties": 1
+        }
+      },
+      "required": ["defaultLocale", "locales"],
+      "additionalProperties": false
+    },
     "provides": {
       "type": "array",
       "description": "Capabilities this plugin provides",

@@ -1,7 +1,10 @@
 import type { PluginManifest, PluginState, RegisteredContributionPoints } from './types';
-import type { VerstakPluginAPI } from './plugin-api';
+import type { PluginLocale, VerstakPluginAPI } from './plugin-api';
 export interface MockPluginAPIOptions {
     contributions?: RegisteredContributionPoints;
+    locale?: PluginLocale;
+    defaultLocale?: PluginLocale;
+    messages?: Partial<Record<PluginLocale, Record<string, string>>>;
 }
 /**
  * Создать тестовый manifest для unit-тестов.

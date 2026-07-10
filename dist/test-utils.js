@@ -3,6 +3,11 @@ const mockCommandHandlers = new Map();
 function commandKey(pluginId, commandId) {
     return `${pluginId}:${commandId}`;
 }
+function interpolateMessage(message, params) {
+    if (!params)
+        return message;
+    return message.replace(/\{([A-Za-z0-9_.-]+)\}/g, (placeholder, name) => (Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : placeholder));
+}
 /**
  * Создать тестовый manifest для unit-тестов.
  */
@@ -39,6 +44,9 @@ export function createTestPluginState(overrides) {
  * Создать заглушку VerstakPluginAPI для тестов.
  */
 export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
+    const locale = options.locale || 'en';
+    const defaultLocale = options.defaultLocale || 'en';
+    const messages = options.messages || {};
     const settings = {};
     const pluginData = new Map();
     const commands = new Map();
@@ -129,6 +137,17 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
     }
     return {
         pluginId,
+        i18n: {
+            getLocale: vi.fn(() => locale),
+            t: vi.fn((key, params, fallback) => {
+                const message = messages[locale]?.[key]
+                    ?? messages[defaultLocale]?.[key]
+                    ?? fallback
+                    ?? key;
+                return interpolateMessage(message, params);
+            }),
+            onDidChangeLocale: vi.fn((_listener) => () => { }),
+        },
         settings: {
             read: vi.fn(async (key) => key ? settings[key] : { ...settings }),
             write: vi.fn(async (key, value) => {

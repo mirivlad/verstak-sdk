@@ -4,6 +4,11 @@
 
 export type PluginSource = 'official' | 'local' | 'third-party';
 
+export interface PluginLocalizationConfig {
+  defaultLocale: string;
+  locales: Record<string, string>;
+}
+
 export interface PluginManifest {
   schemaVersion: 1;
   id: string;
@@ -13,6 +18,7 @@ export interface PluginManifest {
   description?: string;
   source?: PluginSource;
   icon?: string;
+  localization?: PluginLocalizationConfig;
   provides: string[];
   requires?: string[];
   optionalRequires?: string[];

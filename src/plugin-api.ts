@@ -23,6 +23,8 @@ import type {
 
 export type PluginCommandArgs = Record<string, unknown>;
 export type PluginDataJSON = Record<string, unknown>;
+export type PluginLocale = 'ru' | 'en';
+export type TranslationParams = Record<string, string | number>;
 export type PluginCommandHandler = (
   args: PluginCommandArgs,
   declaration: PluginCommandDeclaration
@@ -94,6 +96,12 @@ export interface BrowserReceiverPairing {
 
 export interface VerstakPluginAPI {
   readonly pluginId: string;
+
+  i18n: {
+    getLocale(): PluginLocale;
+    t(key: string, params?: TranslationParams, fallback?: string): string;
+    onDidChangeLocale(listener: (locale: PluginLocale) => void): Unsubscribe;
+  };
 
   settings: {
     read(): Promise<PluginSettings>;

@@ -16,6 +16,9 @@ describe('VerstakPluginAPI contract', () => {
     expect(typeof api.settings.write).toBe('function');
     expect(typeof api.storage.data.read).toBe('function');
     expect(typeof api.storage.data.write).toBe('function');
+    expect(typeof api.i18n.getLocale).toBe('function');
+    expect(typeof api.i18n.t).toBe('function');
+    expect(typeof api.i18n.onDidChangeLocale).toBe('function');
     expect(typeof api.ui.openSettings).toBe('function');
     expect(typeof api.capabilities.list).toBe('function');
     expect(typeof api.commands.register).toBe('function');
@@ -56,6 +59,56 @@ describe('VerstakPluginAPI contract', () => {
     expect(permissionEnum).toContain('files.delete');
     expect(permissionEnum).toContain('files.openExternal');
     expect(permissionEnum).toContain('workbench.open');
+  });
+
+  test('manifest schema declares safe plugin localization catalogs', () => {
+    const localization = (manifestSchema as any).properties.localization;
+
+    expect(localization.type).toBe('object');
+    expect(localization.required).toEqual(['defaultLocale', 'locales']);
+    expect(localization.properties.defaultLocale.pattern).toBe('^[a-z]{2}(?:-[a-z0-9]+)*$');
+    expect(localization.properties.locales.propertyNames.pattern).toBe('^[a-z]{2}(?:-[a-z0-9]+)*$');
+    expect(localization.properties.locales.additionalProperties.pattern).toBe('^(?![\\\\/])(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$');
+  });
+
+  test('manifest types accept plugin-owned localization catalogs', () => {
+    const manifest: PluginManifest = {
+      schemaVersion: 1,
+      id: 'localized.plugin',
+      name: 'Localized Plugin',
+      version: '0.1.0',
+      apiVersion: '0.1.0',
+      provides: ['localized.example'],
+      permissions: ['ui.register'],
+      localization: {
+        defaultLocale: 'en',
+        locales: {
+          en: 'locales/en.json',
+          ru: 'locales/ru.json',
+        },
+      },
+    };
+
+    expect(manifest.localization?.defaultLocale).toBe('en');
+    expect(manifest.localization?.locales.ru).toBe('locales/ru.json');
+  });
+
+  test('mock i18n translates with fallback and named interpolation', () => {
+    const api = createMockPluginAPI('localized.plugin', {
+      locale: 'ru',
+      messages: {
+        en: { greeting: 'Hello, {name}!', onlyEnglish: 'English fallback' },
+        ru: { greeting: 'Привет, {name}!' },
+      },
+      defaultLocale: 'en',
+    });
+
+    expect(api.i18n.getLocale()).toBe('ru');
+    expect(api.i18n.t('greeting', { name: 'Мир' })).toBe('Привет, Мир!');
+    expect(api.i18n.t('onlyEnglish')).toBe('English fallback');
+    expect(api.i18n.t('missing', undefined, 'Fallback')).toBe('Fallback');
+    expect(api.i18n.t('unknown')).toBe('unknown');
+    expect(typeof api.i18n.onDidChangeLocale(() => {})).toBe('function');
   });
 
   test('secrets capability and permissions are declared as dangerous platform contract', () => {

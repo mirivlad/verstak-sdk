@@ -1,6 +1,8 @@
 import type { CapabilityEntry, FileBytes, FileEntry, FileMetadata, MovePathOptions, OpenResourceRequest, OpenResourceResult, PluginSettings, RegisteredContributionPoints, RestoreTrashOptions, TrashEntry, TrashResult, WriteTextOptions } from './types';
 export type PluginCommandArgs = Record<string, unknown>;
 export type PluginDataJSON = Record<string, unknown>;
+export type PluginLocale = 'ru' | 'en';
+export type TranslationParams = Record<string, string | number>;
 export type PluginCommandHandler = (args: PluginCommandArgs, declaration: PluginCommandDeclaration) => unknown | Promise<unknown>;
 export type Unsubscribe = () => void;
 export interface PluginCommandDeclaration {
@@ -61,6 +63,11 @@ export interface BrowserReceiverPairing {
 }
 export interface VerstakPluginAPI {
     readonly pluginId: string;
+    i18n: {
+        getLocale(): PluginLocale;
+        t(key: string, params?: TranslationParams, fallback?: string): string;
+        onDidChangeLocale(listener: (locale: PluginLocale) => void): Unsubscribe;
+    };
     settings: {
         read(): Promise<PluginSettings>;
         read<T = unknown>(key: string): Promise<T | undefined>;

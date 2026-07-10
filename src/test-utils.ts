@@ -1,7 +1,7 @@
 // Verstak Plugin SDK — Test Utilities
 
 import type { PluginManifest, PluginState, RegisteredContributionPoints } from './types';
-import type { PluginCommandHandler, VerstakPluginAPI } from './plugin-api';
+import type { PluginCommandHandler, PluginLocale, TranslationParams, VerstakPluginAPI } from './plugin-api';
 
 const mockCommandHandlers = new Map<string, PluginCommandHandler>();
 
@@ -11,6 +11,16 @@ function commandKey(pluginId: string, commandId: string): string {
 
 export interface MockPluginAPIOptions {
   contributions?: RegisteredContributionPoints;
+  locale?: PluginLocale;
+  defaultLocale?: PluginLocale;
+  messages?: Partial<Record<PluginLocale, Record<string, string>>>;
+}
+
+function interpolateMessage(message: string, params?: TranslationParams): string {
+  if (!params) return message;
+  return message.replace(/\{([A-Za-z0-9_.-]+)\}/g, (placeholder, name: string) => (
+    Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : placeholder
+  ));
 }
 
 /**
@@ -51,6 +61,9 @@ export function createTestPluginState(overrides?: Partial<PluginState>): PluginS
  * Создать заглушку VerstakPluginAPI для тестов.
  */
 export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPluginAPIOptions = {}): VerstakPluginAPI {
+  const locale = options.locale || 'en';
+  const defaultLocale = options.defaultLocale || 'en';
+  const messages = options.messages || {};
   const settings: Record<string, unknown> = {};
   const pluginData = new Map<string, Record<string, unknown>>();
   const commands = new Map<string, PluginCommandHandler>();
@@ -139,6 +152,17 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
 
   return {
     pluginId,
+    i18n: {
+      getLocale: vi.fn(() => locale),
+      t: vi.fn((key: string, params?: TranslationParams, fallback?: string) => {
+        const message = messages[locale]?.[key]
+          ?? messages[defaultLocale]?.[key]
+          ?? fallback
+          ?? key;
+        return interpolateMessage(message, params);
+      }),
+      onDidChangeLocale: vi.fn((_listener: (nextLocale: PluginLocale) => void) => () => {}),
+    },
     settings: {
       read: vi.fn(async (key?: string) => key ? settings[key] : { ...settings }) as VerstakPluginAPI['settings']['read'],
       write: vi.fn(async (key: string, value: unknown) => {
