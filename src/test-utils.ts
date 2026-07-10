@@ -348,6 +348,12 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
         if (index >= 0) trashEntries.splice(index, 1);
         return target;
       }),
+      deleteTrash: vi.fn(async (trashId: string) => {
+        const index = trashEntries.findIndex((item) => item.trashId === trashId);
+        if (index < 0) throw new Error(`not-found: trash entry ${trashId}`);
+        trashEntries.splice(index, 1);
+        trashPayloads.delete(trashId);
+      }),
       openExternal: vi.fn(async (relativePath: string) => {
         const path = normalizePath(relativePath);
         if (!files.has(path)) throw new Error(`not-found: ${path}`);
