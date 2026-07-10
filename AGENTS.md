@@ -56,6 +56,7 @@ entity.file
 entity.note
 note.registry
 file.browser
+trash.management
 activity.log
 activity.provider
 activity.reconstruction

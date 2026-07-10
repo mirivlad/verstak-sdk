@@ -71,6 +71,12 @@ describe('VerstakPluginAPI contract', () => {
     expect(permissionEnum).toEqual(expect.arrayContaining(['secrets.read', 'secrets.write']));
   });
 
+  test('trash management capability is declared for global deleted-item surfaces', () => {
+    const capabilities = ((capabilitiesSchema as any).capabilities || []) as Array<{ name: string; status: string }>;
+
+    expect(capabilities).toContainEqual(expect.objectContaining({ name: 'trash.management', status: 'draft' }));
+  });
+
   test('browser receiver token management is declared as a dangerous platform contract', () => {
     const permissions = ((permissionsSchema as any).permissions || []) as Array<{ name: string; dangerous: boolean }>;
     const permissionEnum = ((manifestSchema as any).properties.permissions.items.enum || []) as string[];

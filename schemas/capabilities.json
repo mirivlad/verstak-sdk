@@ -43,6 +43,7 @@
     { "name": "entity.note", "description": "Note entity type support", "status": "draft" },
     { "name": "note.registry", "description": "Note metadata registry", "status": "draft" },
     { "name": "file.browser", "description": "File browser tree/list UI", "status": "draft" },
+    { "name": "trash.management", "description": "Global deleted-item management UI", "status": "draft" },
     { "name": "activity.log", "description": "Activity event logging", "status": "draft" },
     { "name": "activity.provider", "description": "Activity event provider", "status": "draft" },
     { "name": "activity.reconstruction", "description": "Activity reconstruction from events", "status": "draft" },
