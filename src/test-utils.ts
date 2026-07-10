@@ -316,6 +316,7 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
           deletedAt: new Date().toISOString(),
           originalType: node.type,
           basename: baseName(path),
+          size: node.type === 'file' ? (node.content || '').length : 0,
         };
         const moving = Array.from(files.entries()).filter(([candidate]) => candidate === path || candidate.startsWith(`${path}/`));
         trashPayloads.set(trashId, moving.map(([candidate, movingNode]) => ({

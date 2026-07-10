@@ -351,6 +351,7 @@ describe('VerstakPluginAPI contract', () => {
     expect(trash.originalPath).toBe('PlatformTest/two.txt');
     expect(trash.trashId).toBeTruthy();
     expect(trash.trashPath).toMatch(/^\.verstak\/trash\/files\/.+\/two\.txt$/);
+    expect(trash.size).toBe(5);
     await expect(api.files.listTrash()).resolves.toEqual([
       expect.objectContaining({ originalPath: 'PlatformTest/two.txt', trashId: trash.trashId }),
     ]);

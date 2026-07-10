@@ -105,6 +105,8 @@ export interface TrashResult {
     trashPath: string;
     trashId: string;
     deletedAt: string;
+    /** Original regular-file size in bytes, when the host can provide it. */
+    size?: number;
 }
 export interface TrashEntry extends TrashResult {
     originalType: FileEntry['type'];
