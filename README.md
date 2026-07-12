@@ -1,6 +1,38 @@
-# verstak-sdk
+# Verstak Plugin SDK
 
-Verstak Plugin SDK — manifest schema, TypeScript SDK, RPC protocol, capability contracts, event schemas, test helpers, packaging tools
+TypeScript API, JSON schemas and contract tests for plugins running in Verstak
+Desktop. The SDK is versioned independently so plugin authors can validate
+their manifests and compile against the public host API.
+
+> **Alpha contract.** This is the first public alpha. Keep SDK, Desktop and
+> official-plugin versions in the same release line while APIs are evolving.
+
+## Install and verify
+
+```bash
+npm ci
+npm run lint
+npm test
+npm run build
+```
+
+The build emits `dist/`. A packed npm artifact can be made locally with:
+
+```bash
+./scripts/release.sh v0.1.0
+```
+
+It validates the requested version against `package.json`, then writes an npm
+tarball and `SHA256SUMS` to `release/`.
+
+## Contracts relevant to the alpha
+
+- Workspaces have durable UUID identities; paths are addresses, not identity.
+- Activity may be scoped to `workspaceId` or to explicit `unassigned` work.
+- The `hostname-normalization-v1.json` vectors define the shared canonical
+  browser-domain representation used by Desktop and the extension.
+- Browser activity batches contain only a normalized hostname and bounded
+  duration. Manual captures use a separate Inbox protocol.
 
 ## Bundled Frontend API Contract
 
@@ -40,3 +72,8 @@ or trash metadata.
 Bundled frontend plugins are trusted/cooperative and run in the desktop JS
 context. Current permission checks are contract checks, not a security boundary;
 real isolation belongs to a later sidecar/sandbox milestone.
+
+## License
+
+Copyright © 2026 Verstak contributors. Licensed under
+[GNU AGPLv3 or later](LICENSE).
