@@ -25,6 +25,18 @@ The build emits `dist/`. A packed npm artifact can be made locally with:
 It validates the requested version against `package.json`, then writes an npm
 tarball and `SHA256SUMS` to `release/`.
 
+## Publish a GitHub Release
+
+```bash
+./scripts/publish-github-release.sh v0.1.0
+```
+
+This runs the same local packaging command, then requires a clean, up-to-date
+`main` and an authenticated [`gh`](https://cli.github.com/) CLI. It creates and
+pushes the annotated version tag when needed and uploads the npm tarball and
+`SHA256SUMS` to GitHub Releases. The requested version must match
+`package.json`.
+
 ## Contracts relevant to the alpha
 
 - Workspaces have durable UUID identities; paths are addresses, not identity.
