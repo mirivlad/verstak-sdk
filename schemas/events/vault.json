@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://git.mirv.top/verstak/verstak-sdk/schemas/events/vault.json",
+  "$id": "https://raw.githubusercontent.com/mirivlad/verstak-sdk/main/schemas/events/vault.json",
   "title": "Verstak Vault Events",
   "description": "Event schemas for vault and case lifecycle events",
   "type": "object",

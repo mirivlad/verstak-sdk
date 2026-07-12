@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://git.mirv.top/verstak/verstak-sdk/schemas/events/lifecycle.json",
+  "$id": "https://raw.githubusercontent.com/mirivlad/verstak-sdk/main/schemas/events/lifecycle.json",
   "title": "Verstak Lifecycle Events",
   "description": "Event schemas for plugin and application lifecycle events",
   "type": "object",

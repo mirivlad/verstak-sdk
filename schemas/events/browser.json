@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://git.mirv.top/verstak/verstak-sdk/schemas/events/browser.json",
+  "$id": "https://raw.githubusercontent.com/mirivlad/verstak-sdk/main/schemas/events/browser.json",
   "title": "Verstak Browser Events",
   "description": "Event schemas for browser extension and browser-inbox plugin communication",
   "type": "object",

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://git.mirv.top/verstak/verstak-sdk/schemas/contributions.json",
+  "$id": "https://raw.githubusercontent.com/mirivlad/verstak-sdk/main/schemas/contributions.json",
   "title": "Verstak Contribution Points Registry",
   "description": "Known contribution points that plugins can register",
   "type": "object",

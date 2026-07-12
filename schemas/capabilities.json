@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://git.mirv.top/verstak/verstak-sdk/schemas/capabilities.json",
+  "$id": "https://raw.githubusercontent.com/mirivlad/verstak-sdk/main/schemas/capabilities.json",
   "title": "Verstak Capability Registry",
   "description": "Known capability names and their descriptions for the Verstak platform",
   "type": "object",

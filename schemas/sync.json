@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://git.mirv.top/verstak/verstak-sdk/schemas/sync.json",
+  "$id": "https://raw.githubusercontent.com/mirivlad/verstak-sdk/main/schemas/sync.json",
   "title": "Verstak Sync Operations",
   "description": "Sync operation schemas for vault synchronization between devices",
   "type": "object",

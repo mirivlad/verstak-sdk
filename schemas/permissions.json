@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://git.mirv.top/verstak/verstak-sdk/schemas/permissions.json",
+  "$id": "https://raw.githubusercontent.com/mirivlad/verstak-sdk/main/schemas/permissions.json",
   "title": "Verstak Permissions Registry",
   "description": "Known runtime permissions and their safety levels",
   "type": "object",

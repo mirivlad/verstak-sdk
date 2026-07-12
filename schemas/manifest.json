@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://git.mirv.top/verstak/verstak-sdk/schemas/manifest.json",
+  "$id": "https://raw.githubusercontent.com/mirivlad/verstak-sdk/main/schemas/manifest.json",
   "title": "Verstak Plugin Manifest",
   "description": "Schema for Verstak plugin.json manifest files",
   "type": "object",
