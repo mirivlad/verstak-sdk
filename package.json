@@ -2,6 +2,7 @@
   "name": "@verstak/plugin-sdk",
   "version": "0.1.0",
   "description": "Verstak Plugin SDK — TypeScript types and runtime API for plugin development",
+  "license": "AGPL-3.0-or-later",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
