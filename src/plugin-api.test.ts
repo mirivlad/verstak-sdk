@@ -135,7 +135,9 @@ describe('VerstakPluginAPI contract', () => {
     const permissionEnum = ((manifestSchema as any).properties.permissions.items.enum || []) as string[];
 
     expect(permissions).toContainEqual(expect.objectContaining({ name: 'browser.receiver.manage', dangerous: true }));
+    expect(permissions).toContainEqual(expect.objectContaining({ name: 'notifications.schedule', dangerous: false }));
     expect(permissionEnum).toContain('browser.receiver.manage');
+    expect(permissionEnum).toContain('notifications.schedule');
   });
 
   test('file.changed schema documents watcher refresh payload', () => {

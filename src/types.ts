@@ -89,7 +89,8 @@ export type Permission =
   | 'secrets.read'
   | 'secrets.write'
   | 'sync.participate'
-  | 'browser.receiver.manage';
+  | 'browser.receiver.manage'
+  | 'notifications.schedule';
 
 export interface PermissionEntry {
   name: Permission;
