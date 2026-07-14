@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/mirivlad/verstak-sdk/main/schemas/hostname-normalization-v1.json",
   "title": "Verstak canonical hostname normalization v1 test vectors",
+  "type": "object",
   "description": "Canonical hostnames are lowercase ASCII A-labels without a port or trailing DNS dot. Bare hostnames accept DNS names, IPv4, bracketed IPv6, localhost, and internal single-label names. URL inputs accept only HTTP(S). Invalid or excessively long input normalizes to an empty string.",
   "version": 1,
   "bare": [
