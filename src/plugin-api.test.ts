@@ -140,6 +140,25 @@ describe('VerstakPluginAPI contract', () => {
     expect(permissionEnum).toContain('notifications.schedule');
   });
 
+  test('desktop core capabilities used by bundled plugins are declared', () => {
+    const capabilities = ((capabilitiesSchema as any).capabilities || []) as Array<{ name: string; status: string }>;
+
+    for (const name of [
+      'verstak/core/plugin-manager/v1',
+      'verstak/core/capability-registry/v1',
+      'verstak/core/contribution-registry/v1',
+      'verstak/core/permissions/v1',
+      'verstak/core/events/v1',
+      'verstak/core/files/v1',
+      'verstak/core/workbench/v1',
+      'verstak/core/notifications/v1',
+      'verstak/core/vault/v1',
+      'verstak/core/workspace/v1',
+    ]) {
+      expect(capabilities).toContainEqual(expect.objectContaining({ name, status: 'draft' }));
+    }
+  });
+
   test('file.changed schema documents watcher refresh payload', () => {
     const fileChanged = (vaultEventsSchema as any).events.find((event: any) => event.name === 'file.changed');
 
