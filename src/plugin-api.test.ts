@@ -3,6 +3,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import capabilitiesSchema from '../schemas/capabilities.json';
 import manifestSchema from '../schemas/manifest.json';
 import permissionsSchema from '../schemas/permissions.json';
+import syncSchema from '../schemas/sync.json';
 import vaultEventsSchema from '../schemas/events/vault.json';
 import type { OpenProviderSupport, OpenResourceRequest, PluginManifest } from './types';
 import { createMockPluginAPI } from './test-utils';
@@ -49,6 +50,22 @@ describe('VerstakPluginAPI contract', () => {
     expect(typeof api.sync.now).toBe('function');
     expect(typeof api.browserReceiver.pairing).toBe('function');
     expect(typeof api.browserReceiver.rotateToken).toBe('function');
+  });
+
+  test('sync status exposes pairing scope and unresolved scanner warning', async () => {
+    const api = createMockPluginAPI('verstak.sync');
+
+    await api.sync.configure('https://sync.example.test', 'alice', 'secret', 'shared-vault-id');
+    const status = await api.sync.status();
+    expect(status).toMatchObject({ vaultId: '', lastWarning: '', configured: false });
+  });
+
+  test('sync schema describes the core operation log and workspace lifecycle', () => {
+    const defs = (syncSchema as any).$defs;
+    expect(defs.Operation.properties.entity_type.enum).toEqual(['file', 'folder', 'workspace']);
+    expect(defs.Operation.properties.op_type.enum).toContain('restore');
+    expect(defs.WorkspacePayload.required).toEqual(['workspaceId', 'path', 'name']);
+    expect(defs.Snapshot.properties.unresolved).toBeDefined();
   });
 
   test('manifest schema accepts files permissions used by platform-test', () => {

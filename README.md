@@ -46,6 +46,31 @@ pushes the annotated version tag when needed and uploads the npm tarball and
 - Browser activity batches contain only a normalized hostname and bounded
   duration. Manual captures use a separate Inbox protocol.
 
+## Core sync contract
+
+`schemas/sync.json` describes the operation-log wire format used by Desktop
+core and sync-server. The server orders opaque operations by
+`server_sequence`; it does not merge file contents or become the source of
+truth. Sync plugins only use `api.sync` for configuration and status.
+
+- File and folder operations are `create`, `update`, `delete`, or `move`.
+  File payloads carry a vault-relative path, a SHA-256 content hash, and the
+  existing bounded text/base64 representation when the file is supported.
+- Workspace (`Deal`) operations are core-owned `workspace` entities with
+  `create`, `rename`, `trash`, and `restore`. Their payload carries the durable
+  `workspaceId`; `.verstak/workspace.json` remains unavailable to plugins and
+  is not ordinary file sync data.
+- A pairing may name an existing remote `vaultId`. Omitting it creates/uses the
+  local vault identity. `SyncStatus.vaultId` reports the selected remote scope.
+- `SyncStatus.lastWarning` reports a persistent unresolved scanner problem.
+  Files larger than the current 8 MB bounded transport or otherwise
+  unsupported are not marked synchronized and are retried on later scans.
+
+The snapshot stored by core is implementation state, not a plugin API. It
+excludes `.verstak`, trash, temporary files, and symlinks. Blob transport,
+quotas, pagination, and retention are deliberately outside this contract and
+remain a later milestone.
+
 ## Bundled Frontend API Contract
 
 Verstak Desktop creates the real API with `createPluginAPI(pluginId)` and passes

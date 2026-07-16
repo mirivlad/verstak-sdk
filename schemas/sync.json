@@ -1,177 +1,136 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/mirivlad/verstak-sdk/main/schemas/sync.json",
-  "title": "Verstak Sync Operations",
-  "description": "Sync operation schemas for vault synchronization between devices",
+  "title": "Verstak core sync operation log",
+  "description": "Wire contracts for the core-owned operation log. Plugins may configure and display sync, but do not create operations.",
   "type": "object",
   "properties": {
-    "SyncOperation": {
-      "$ref": "#/$defs/SyncOperation"
-    },
-    "SyncBatch": {
-      "$ref": "#/$defs/SyncBatch"
-    },
-    "SyncManifest": {
-      "$ref": "#/$defs/SyncManifest"
-    }
+    "Operation": { "$ref": "#/$defs/Operation" },
+    "PushRequest": { "$ref": "#/$defs/PushRequest" },
+    "PullResponse": { "$ref": "#/$defs/PullResponse" },
+    "Snapshot": { "$ref": "#/$defs/Snapshot" },
+    "PairingRequest": { "$ref": "#/$defs/PairingRequest" }
   },
   "$defs": {
-    "SyncOperation": {
+    "Operation": {
       "type": "object",
-      "description": "A single sync operation entry",
-      "required": ["op", "id", "timestamp"],
+      "required": ["op_id", "device_id", "entity_type", "entity_id", "op_type", "payload_json", "created_at"],
       "properties": {
-        "op": {
-          "type": "string",
-          "description": "Operation type",
-          "enum": ["add", "modify", "delete", "rename"]
-        },
-        "id": {
-          "type": "string",
-          "description": "Unique operation identifier (UUID)"
-        },
-        "timestamp": {
-          "type": "string",
-          "description": "ISO 8601 timestamp of the operation"
-        },
-        "deviceId": {
-          "type": "string",
-          "description": "Originating device identifier"
-        },
-        "entityType": {
-          "type": "string",
-          "description": "Entity type being synced",
-          "enum": ["file", "note", "plugin_state", "vault_meta"]
-        },
-        "entityPath": {
-          "type": "string",
-          "description": "Entity path relative to vault root"
-        },
-        "hash": {
-          "type": "string",
-          "description": "Content hash (SHA-256) for content verification"
-        },
-        "size": {
-          "type": "integer",
-          "description": "File size in bytes"
-        },
-        "mimeType": {
-          "type": "string",
-          "description": "MIME type of the entity"
-        },
-        "pluginNamespace": {
-          "type": "string",
-          "description": "Plugin namespace, if syncing plugin state"
-        },
-        "oldPath": {
-          "type": "string",
-          "description": "Previous path for rename operations"
-        },
-        "metadata": {
-          "type": "object",
-          "description": "Arbitrary metadata key-value pairs",
-          "additionalProperties": { "type": "string" }
-        }
-      }
+        "op_id": { "type": "string", "minLength": 1 },
+        "server_sequence": { "type": "integer", "minimum": 1 },
+        "device_id": { "type": "string" },
+        "entity_type": { "enum": ["file", "folder", "workspace"] },
+        "entity_id": { "type": "string", "minLength": 1 },
+        "op_type": { "enum": ["create", "update", "delete", "move", "rename", "trash", "restore"] },
+        "payload_json": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "client_sequence": { "type": "integer", "minimum": 0 },
+        "last_seen_server_seq": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
     },
-    "SyncBatch": {
+    "FilePayload": {
       "type": "object",
-      "description": "A batch of sync operations sent between devices",
-      "required": ["batchId", "deviceId", "operations", "timestamp"],
+      "required": ["path"],
       "properties": {
-        "batchId": {
-          "type": "string",
-          "description": "Unique batch identifier (UUID)"
-        },
-        "deviceId": {
-          "type": "string",
-          "description": "Originating device identifier"
-        },
-        "operations": {
-          "type": "array",
-          "description": "List of sync operations in this batch",
-          "items": {
-            "$ref": "#/$defs/SyncOperation"
-          }
-        },
-        "timestamp": {
-          "type": "string",
-          "description": "ISO 8601 timestamp of batch creation"
-        },
-        "lastSyncTimestamp": {
-          "type": "string",
-          "description": "Timestamp of the last successful sync from this device"
-        },
-        "sequence": {
-          "type": "integer",
-          "description": "Sequence number for ordering batches"
-        }
-      }
+        "path": { "$ref": "#/$defs/VaultPath" },
+        "content": { "type": "string" },
+        "dataBase64": { "type": "string", "contentEncoding": "base64" },
+        "contentHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "fromPath": { "$ref": "#/$defs/VaultPath" },
+        "toPath": { "$ref": "#/$defs/VaultPath" }
+      },
+      "additionalProperties": false
     },
-    "SyncManifest": {
+    "WorkspacePayload": {
       "type": "object",
-      "description": "Vault sync manifest for initial reconciliation",
-      "required": ["deviceId", "entries"],
+      "required": ["workspaceId", "path", "name"],
       "properties": {
-        "deviceId": { "type": "string" },
-        "entries": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["path", "hash", "updatedAt"],
-            "properties": {
-              "path": { "type": "string" },
-              "hash": { "type": "string" },
-              "size": { "type": "integer" },
-              "updatedAt": { "type": "string" },
-              "deleted": { "type": "boolean", "default": false }
-            }
-          }
-        }
-      }
+        "workspaceId": { "type": "string", "format": "uuid" },
+        "path": { "$ref": "#/$defs/WorkspacePath" },
+        "previousPath": { "$ref": "#/$defs/WorkspacePath" },
+        "name": { "type": "string", "minLength": 1 },
+        "metadata": { "type": "object", "additionalProperties": true }
+      },
+      "additionalProperties": false
     },
-    "Conflict": {
+    "PushRequest": {
       "type": "object",
-      "description": "Conflict record when two devices modify the same entity",
-      "required": ["entityPath", "localHash", "remoteHash", "localTimestamp", "remoteTimestamp"],
+      "required": ["device_id", "ops"],
       "properties": {
-        "entityPath": { "type": "string" },
-        "localHash": { "type": "string" },
-        "remoteHash": { "type": "string" },
-        "localTimestamp": { "type": "string" },
-        "remoteTimestamp": { "type": "string" },
-        "resolution": {
-          "type": "string",
-          "enum": ["local_wins", "remote_wins", "manual"],
-          "description": "How the conflict was resolved"
-        },
-        "resolvedAt": { "type": "string" }
-      }
+        "device_id": { "type": "string", "minLength": 1 },
+        "idempotency_key": { "type": "string" },
+        "ops": { "type": "array", "items": { "$ref": "#/$defs/PushOperation" } }
+      },
+      "additionalProperties": false
+    },
+    "PullResponse": {
+      "type": "object",
+      "required": ["server_sequence", "ops"],
+      "properties": {
+        "server_sequence": { "type": "integer", "minimum": 0 },
+        "ops": { "type": "array", "items": { "$ref": "#/$defs/Operation" } }
+      },
+      "additionalProperties": false
+    },
+    "PushOperation": {
+      "type": "object",
+      "required": ["op_id", "entity_type", "entity_id", "op_type", "payload_json", "created_at"],
+      "properties": {
+        "op_id": { "type": "string", "minLength": 1 },
+        "entity_type": { "enum": ["file", "folder", "workspace"] },
+        "entity_id": { "type": "string", "minLength": 1 },
+        "op_type": { "enum": ["create", "update", "delete", "move", "rename", "trash", "restore"] },
+        "payload_json": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "client_sequence": { "type": "integer", "minimum": 0 },
+        "last_seen_server_seq": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "SnapshotEntry": {
+      "type": "object",
+      "required": ["path", "type", "size", "modifiedAt"],
+      "properties": {
+        "path": { "$ref": "#/$defs/VaultPath" },
+        "type": { "enum": ["file", "folder"] },
+        "size": { "type": "integer", "minimum": 0 },
+        "modifiedAt": { "type": "string", "format": "date-time" },
+        "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      },
+      "additionalProperties": false
+    },
+    "Snapshot": {
+      "type": "object",
+      "required": ["version", "entries"],
+      "properties": {
+        "version": { "type": "integer", "minimum": 1 },
+        "entries": { "type": "object", "additionalProperties": { "$ref": "#/$defs/SnapshotEntry" } },
+        "unresolved": { "type": "object", "additionalProperties": { "type": "string" } }
+      },
+      "additionalProperties": true
     },
     "PairingRequest": {
       "type": "object",
-      "description": "Device pairing request payload",
-      "required": ["deviceName", "deviceType", "publicKey"],
+      "required": ["login", "password", "device_name", "vault_id"],
       "properties": {
-        "deviceName": { "type": "string" },
-        "deviceType": {
-          "type": "string",
-          "enum": ["desktop", "mobile"]
-        },
-        "publicKey": { "type": "string", "description": "Device public key for auth" },
-        "clientVersion": { "type": "string" }
-      }
+        "login": { "type": "string", "minLength": 1 },
+        "password": { "type": "string", "minLength": 1 },
+        "device_name": { "type": "string", "minLength": 1 },
+        "client_version": { "type": "string" },
+        "vault_id": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
     },
-    "PairingResponse": {
-      "type": "object",
-      "description": "Device pairing response",
-      "required": ["deviceId", "token", "pairedAt"],
-      "properties": {
-        "deviceId": { "type": "string" },
-        "token": { "type": "string", "description": "Auth token for this device" },
-        "pairedAt": { "type": "string" },
-        "serverVersion": { "type": "string" }
-      }
+    "VaultPath": {
+      "type": "string",
+      "minLength": 1,
+      "not": { "pattern": "(^|/)\\.verstak(/|$)" }
+    },
+    "WorkspacePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^/]+$"
     }
   }
 }

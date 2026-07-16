@@ -421,6 +421,7 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
             status: vi.fn(async () => ({
                 configured: false,
                 serverUrl: '',
+                vaultId: '',
                 deviceId: '',
                 deviceName: '',
                 connected: false,
@@ -430,6 +431,7 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
                 lastSyncAt: '',
                 syncInterval: 0,
                 lastError: '',
+                lastWarning: '',
                 statusLabel: 'disabled',
             })),
             configure: vi.fn(async () => { }),

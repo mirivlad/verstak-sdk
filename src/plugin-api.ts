@@ -56,6 +56,8 @@ export interface PluginEvent<TPayload = Record<string, unknown>> {
 export interface SyncStatus {
   configured: boolean;
   serverUrl: string;
+  /** Remote sync scope selected during pairing. It can differ from this device's local vault UUID. */
+  vaultId: string;
   deviceId: string;
   deviceName: string;
   connected: boolean;
@@ -65,7 +67,51 @@ export interface SyncStatus {
   lastSyncAt: string;
   syncInterval: number;
   lastError: string;
+  /** A persistent unresolved scanner warning, for example an over-limit file. */
+  lastWarning: string;
   statusLabel: string;
+}
+
+/** Core operation-log contract. Plugins can display status but cannot create these operations. */
+export type SyncEntityType = 'file' | 'folder' | 'workspace';
+export type SyncOperationType = 'create' | 'update' | 'delete' | 'move' | 'rename' | 'trash' | 'restore';
+
+export interface SyncOperation {
+  opId: string;
+  serverSequence?: number;
+  deviceId: string;
+  entityType: SyncEntityType;
+  entityId: string;
+  opType: SyncOperationType;
+  payloadJson: string;
+  createdAt: string;
+  clientSequence?: number;
+  lastSeenServerSeq?: number;
+}
+
+export interface SyncFilePayload {
+  path: string;
+  content?: string;
+  dataBase64?: string;
+  contentHash?: string;
+  fromPath?: string;
+  toPath?: string;
+}
+
+export interface SyncWorkspacePayload {
+  workspaceId: string;
+  path: string;
+  previousPath?: string;
+  name: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface SyncSnapshotEntry {
+  path: string;
+  type: 'file' | 'folder';
+  size: number;
+  modifiedAt: string;
+  hash?: string;
 }
 
 export interface SyncConflict {
@@ -177,7 +223,7 @@ export interface VerstakPluginAPI {
 
   sync: {
     status(): Promise<SyncStatus>;
-    configure(serverUrl: string, username: string, password: string): Promise<void>;
+    configure(serverUrl: string, username: string, password: string, remoteVaultId?: string): Promise<void>;
     disconnect(): Promise<void>;
     testConnection(serverUrl: string, username: string, password: string): Promise<void>;
     setInterval(minutes: number): Promise<void>;
