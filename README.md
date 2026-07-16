@@ -54,22 +54,28 @@ core and sync-server. The server orders opaque operations by
 truth. Sync plugins only use `api.sync` for configuration and status.
 
 - File and folder operations are `create`, `update`, `delete`, or `move`.
-  File payloads carry a vault-relative path, a SHA-256 content hash, and the
-  existing bounded text/base64 representation when the file is supported.
+  Small UTF-8 text may be inline; binary and large files carry a `blob`
+  `{sha256,size}` reference. The bytes are uploaded/downloaded through the
+  scoped Blob API before an operation is accepted/applied, never base64 in the
+  operation log.
 - Workspace (`Deal`) operations are core-owned `workspace` entities with
   `create`, `rename`, `trash`, and `restore`. Their payload carries the durable
   `workspaceId`; `.verstak/workspace.json` remains unavailable to plugins and
   is not ordinary file sync data.
 - A pairing may name an existing remote `vaultId`. Omitting it creates/uses the
   local vault identity. `SyncStatus.vaultId` reports the selected remote scope.
+- Pull uses `since_sequence` and a bounded `page_limit`; each response has
+  `page_last_sequence` and `has_more`. Clients persist a cursor only after an
+  operation is safely applied and stop at the first failed sequence.
 - `SyncStatus.lastWarning` reports a persistent unresolved scanner problem.
-  Files larger than the current 8 MB bounded transport or otherwise
-  unsupported are not marked synchronized and are retried on later scans.
+  A file over the configured blob limit or otherwise unsupported is not marked
+  synchronized and is retried on later scans.
 
 The snapshot stored by core is implementation state, not a plugin API. It
-excludes `.verstak`, trash, temporary files, and symlinks. Blob transport,
-quotas, pagination, and retention are deliberately outside this contract and
-remain a later milestone.
+excludes `.verstak`, trash, temporary files, and symlinks. Blob ownership,
+quotas and pagination are part of the current wire contract. Operation-log
+retention remains a future checkpoint milestone: deleting it now could prevent
+a newly paired device from reconstructing a vault.
 
 ## Bundled Frontend API Contract
 

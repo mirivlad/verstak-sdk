@@ -7,7 +7,9 @@
   "properties": {
     "Operation": { "$ref": "#/$defs/Operation" },
     "PushRequest": { "$ref": "#/$defs/PushRequest" },
+    "PullRequest": { "$ref": "#/$defs/PullRequest" },
     "PullResponse": { "$ref": "#/$defs/PullResponse" },
+    "BlobReference": { "$ref": "#/$defs/BlobReference" },
     "Snapshot": { "$ref": "#/$defs/Snapshot" },
     "PairingRequest": { "$ref": "#/$defs/PairingRequest" }
   },
@@ -16,13 +18,13 @@
       "type": "object",
       "required": ["op_id", "device_id", "entity_type", "entity_id", "op_type", "payload_json", "created_at"],
       "properties": {
-        "op_id": { "type": "string", "minLength": 1 },
+        "op_id": { "type": "string", "minLength": 1, "maxLength": 128 },
         "server_sequence": { "type": "integer", "minimum": 1 },
-        "device_id": { "type": "string" },
+        "device_id": { "type": "string", "maxLength": 128 },
         "entity_type": { "enum": ["file", "folder", "workspace"] },
-        "entity_id": { "type": "string", "minLength": 1 },
+        "entity_id": { "type": "string", "minLength": 1, "maxLength": 4096 },
         "op_type": { "enum": ["create", "update", "delete", "move", "rename", "trash", "restore"] },
-        "payload_json": { "type": "string" },
+        "payload_json": { "type": "string", "maxLength": 262144 },
         "created_at": { "type": "string", "format": "date-time" },
         "client_sequence": { "type": "integer", "minimum": 0 },
         "last_seen_server_seq": { "type": "integer", "minimum": 0 }
@@ -34,11 +36,20 @@
       "required": ["path"],
       "properties": {
         "path": { "$ref": "#/$defs/VaultPath" },
-        "content": { "type": "string" },
-        "dataBase64": { "type": "string", "contentEncoding": "base64" },
+        "content": { "type": "string", "description": "Bounded inline UTF-8 text only." },
+        "blob": { "$ref": "#/$defs/BlobReference" },
         "contentHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
         "fromPath": { "$ref": "#/$defs/VaultPath" },
         "toPath": { "$ref": "#/$defs/VaultPath" }
+      },
+      "additionalProperties": false
+    },
+    "BlobReference": {
+      "type": "object",
+      "required": ["sha256", "size"],
+      "properties": {
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "size": { "type": "integer", "minimum": 0 }
       },
       "additionalProperties": false
     },
@@ -58,17 +69,28 @@
       "type": "object",
       "required": ["device_id", "ops"],
       "properties": {
-        "device_id": { "type": "string", "minLength": 1 },
-        "idempotency_key": { "type": "string" },
-        "ops": { "type": "array", "items": { "$ref": "#/$defs/PushOperation" } }
+        "device_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "idempotency_key": { "type": "string", "maxLength": 128 },
+        "ops": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/PushOperation" } }
+      },
+      "additionalProperties": false
+    },
+    "PullRequest": {
+      "type": "object",
+      "required": ["since_sequence"],
+      "properties": {
+        "since_sequence": { "type": "integer", "minimum": 0 },
+        "page_limit": { "type": "integer", "minimum": 1, "maximum": 100 }
       },
       "additionalProperties": false
     },
     "PullResponse": {
       "type": "object",
-      "required": ["server_sequence", "ops"],
+      "required": ["server_sequence", "page_last_sequence", "has_more", "ops"],
       "properties": {
         "server_sequence": { "type": "integer", "minimum": 0 },
+        "page_last_sequence": { "type": "integer", "minimum": 0 },
+        "has_more": { "type": "boolean" },
         "ops": { "type": "array", "items": { "$ref": "#/$defs/Operation" } }
       },
       "additionalProperties": false
@@ -77,11 +99,11 @@
       "type": "object",
       "required": ["op_id", "entity_type", "entity_id", "op_type", "payload_json", "created_at"],
       "properties": {
-        "op_id": { "type": "string", "minLength": 1 },
+        "op_id": { "type": "string", "minLength": 1, "maxLength": 128 },
         "entity_type": { "enum": ["file", "folder", "workspace"] },
-        "entity_id": { "type": "string", "minLength": 1 },
+        "entity_id": { "type": "string", "minLength": 1, "maxLength": 4096 },
         "op_type": { "enum": ["create", "update", "delete", "move", "rename", "trash", "restore"] },
-        "payload_json": { "type": "string" },
+        "payload_json": { "type": "string", "maxLength": 262144 },
         "created_at": { "type": "string", "format": "date-time" },
         "client_sequence": { "type": "integer", "minimum": 0 },
         "last_seen_server_seq": { "type": "integer", "minimum": 0 }
@@ -114,11 +136,11 @@
       "type": "object",
       "required": ["login", "password", "device_name", "vault_id"],
       "properties": {
-        "login": { "type": "string", "minLength": 1 },
+        "login": { "type": "string", "minLength": 1, "maxLength": 320 },
         "password": { "type": "string", "minLength": 1 },
-        "device_name": { "type": "string", "minLength": 1 },
-        "client_version": { "type": "string" },
-        "vault_id": { "type": "string", "minLength": 1 }
+        "device_name": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "client_version": { "type": "string", "maxLength": 256 },
+        "vault_id": { "type": "string", "minLength": 1, "maxLength": 256 }
       },
       "additionalProperties": false
     },

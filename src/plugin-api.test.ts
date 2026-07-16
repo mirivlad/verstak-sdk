@@ -66,6 +66,9 @@ describe('VerstakPluginAPI contract', () => {
     expect(defs.Operation.properties.op_type.enum).toContain('restore');
     expect(defs.WorkspacePayload.required).toEqual(['workspaceId', 'path', 'name']);
     expect(defs.Snapshot.properties.unresolved).toBeDefined();
+    expect(defs.FilePayload.properties.blob.$ref).toBe('#/$defs/BlobReference');
+    expect(defs.FilePayload.properties.dataBase64).toBeUndefined();
+    expect(defs.PullResponse.required).toContain('has_more');
   });
 
   test('manifest schema accepts files permissions used by platform-test', () => {

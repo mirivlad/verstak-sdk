@@ -43,6 +43,53 @@ export interface SyncConfig {
     namespaces?: string[];
     participate?: boolean;
 }
+/** A content-addressed binary payload. Blob bytes are uploaded before the
+ * operation that references them and are never base64-embedded in the log. */
+export interface SyncBlobReference {
+    sha256: string;
+    size: number;
+}
+export interface SyncFilePayload {
+    path: string;
+    content?: string;
+    blob?: SyncBlobReference;
+    contentHash?: string;
+    fromPath?: string;
+    toPath?: string;
+}
+export interface SyncOperation {
+    op_id: string;
+    server_sequence?: number;
+    device_id?: string;
+    entity_type: 'file' | 'folder' | 'workspace';
+    entity_id: string;
+    op_type: 'create' | 'update' | 'delete' | 'move' | 'rename' | 'trash' | 'restore';
+    payload_json: string;
+    created_at: string;
+    client_sequence?: number;
+    last_seen_server_seq?: number;
+}
+export interface SyncPushRequest {
+    device_id: string;
+    idempotency_key?: string;
+    ops: Omit<SyncOperation, 'server_sequence' | 'device_id'>[];
+}
+export interface SyncPullRequest {
+    since_sequence: number;
+    page_limit?: number;
+}
+export interface SyncPullResponse {
+    server_sequence: number;
+    page_last_sequence: number;
+    has_more: boolean;
+    ops: SyncOperation[];
+}
+/** Stable public errors. UI must map `code` to localized copy rather than
+ * displaying server diagnostics. */
+export interface SyncServerError {
+    error: string;
+    code: string;
+}
 export type CapabilityName = string;
 export interface CapabilityEntry {
     name: CapabilityName;
