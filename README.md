@@ -1,11 +1,23 @@
+<div align="center">
+
 # Verstak Plugin SDK
+
+### TypeScript API, JSON schemas and contract tests for Verstak plugins.
+
+**English** · [Русский](README.ru.md)
+
+[![Release](https://img.shields.io/github/v/release/mirivlad/verstak-sdk?include_prereleases\&label=release)](https://github.com/mirivlad/verstak-sdk/releases)
+![Status](https://img.shields.io/badge/status-alpha-orange)
+[![License](https://img.shields.io/github/license/mirivlad/verstak-sdk)](LICENSE)
+
+</div>
+
+> **Alpha contract.** Keep SDK, Desktop and official-plugin versions in the
+> same release line while APIs are evolving.
 
 TypeScript API, JSON schemas and contract tests for plugins running in Verstak
 Desktop. The SDK is versioned independently so plugin authors can validate
 their manifests and compile against the public host API.
-
-> **Alpha contract.** This is the first public alpha. Keep SDK, Desktop and
-> official-plugin versions in the same release line while APIs are evolving.
 
 ## Install and verify
 
