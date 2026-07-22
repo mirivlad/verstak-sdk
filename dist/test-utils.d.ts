@@ -1,10 +1,15 @@
-import type { PluginManifest, PluginState, RegisteredContributionPoints } from './types';
+import type { ImportSourceEntry, ImportSourceSession, PluginManifest, PluginState, RegisteredContributionPoints } from './types';
 import type { PluginLocale, VerstakPluginAPI } from './plugin-api';
 export interface MockPluginAPIOptions {
     contributions?: RegisteredContributionPoints;
     locale?: PluginLocale;
     defaultLocale?: PluginLocale;
     messages?: Partial<Record<PluginLocale, Record<string, string>>>;
+    importSources?: Array<{
+        session: ImportSourceSession;
+        entries: ImportSourceEntry[];
+        textByEntryId: Record<string, string>;
+    }>;
 }
 /**
  * Создать тестовый manifest для unit-тестов.

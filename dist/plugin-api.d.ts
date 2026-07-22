@@ -1,4 +1,4 @@
-import type { CapabilityEntry, FileBytes, FileEntry, FileMetadata, MovePathOptions, OpenResourceRequest, OpenResourceResult, PluginSettings, RegisteredContributionPoints, RestoreTrashOptions, TrashEntry, TrashResult, WriteTextOptions } from './types';
+import type { CapabilityEntry, FileBytes, FileEntry, FileMetadata, ImportApplyResult, ImportEntryPage, ImportPlan, ImportProgress, ImportSourceSession, MovePathOptions, OpenResourceRequest, OpenResourceResult, PluginSettings, RegisteredContributionPoints, RestoreTrashOptions, TrashEntry, TrashResult, WriteTextOptions } from './types';
 export type PluginCommandArgs = Record<string, unknown>;
 export type PluginDataJSON = Record<string, unknown>;
 export type PluginLocale = 'ru' | 'en';
@@ -146,6 +146,16 @@ export interface VerstakPluginAPI {
     events: {
         publish(eventName: string, payload?: Record<string, unknown>): Promise<void>;
         subscribe<TPayload = Record<string, unknown>>(eventName: string, handler: (event: PluginEvent<TPayload>) => void): Promise<Unsubscribe>;
+    };
+    imports: {
+        selectDirectory(): Promise<ImportSourceSession | null>;
+        selectArchive(): Promise<ImportSourceSession | null>;
+        listEntries(sourceHandle: string, cursor?: string): Promise<ImportEntryPage>;
+        readText(sourceHandle: string, entryId: string): Promise<string>;
+        onProgress(sourceHandle: string, listener: (progress: ImportProgress) => void): Unsubscribe;
+        applyPlan(sourceHandle: string, plan: ImportPlan): Promise<ImportApplyResult>;
+        cancel(sourceHandle: string): Promise<void>;
+        closeSource(sourceHandle: string): Promise<void>;
     };
     files: {
         /**

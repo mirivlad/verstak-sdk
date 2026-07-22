@@ -10,6 +10,11 @@ import type {
   FileBytes,
   FileEntry,
   FileMetadata,
+  ImportApplyResult,
+  ImportEntryPage,
+  ImportPlan,
+  ImportProgress,
+  ImportSourceSession,
   MovePathOptions,
   OpenResourceRequest,
   OpenResourceResult,
@@ -192,6 +197,17 @@ export interface VerstakPluginAPI {
       eventName: string,
       handler: (event: PluginEvent<TPayload>) => void
     ): Promise<Unsubscribe>;
+  };
+
+  imports: {
+    selectDirectory(): Promise<ImportSourceSession | null>;
+    selectArchive(): Promise<ImportSourceSession | null>;
+    listEntries(sourceHandle: string, cursor?: string): Promise<ImportEntryPage>;
+    readText(sourceHandle: string, entryId: string): Promise<string>;
+    onProgress(sourceHandle: string, listener: (progress: ImportProgress) => void): Unsubscribe;
+    applyPlan(sourceHandle: string, plan: ImportPlan): Promise<ImportApplyResult>;
+    cancel(sourceHandle: string): Promise<void>;
+    closeSource(sourceHandle: string): Promise<void>;
   };
 
   files: {

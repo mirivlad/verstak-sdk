@@ -33,6 +33,7 @@
     { "name": "verstak/core/permissions/v1", "description": "Core plugin permission enforcement", "status": "draft" },
     { "name": "verstak/core/events/v1", "description": "Core plugin event bus", "status": "draft" },
     { "name": "verstak/core/files/v1", "description": "Core vault files API", "status": "draft" },
+    { "name": "verstak/core/import/v1", "description": "Core safe external source and transactional import API", "status": "draft" },
     { "name": "verstak/core/workbench/v1", "description": "Core Workbench resource routing", "status": "draft" },
     { "name": "verstak/core/notifications/v1", "description": "Core native notification scheduling", "status": "draft" },
     { "name": "verstak/core/vault/v1", "description": "Core vault lifecycle", "status": "draft" },
@@ -72,6 +73,7 @@
     { "name": "case.templates", "description": "Case template provider", "status": "draft" },
     { "name": "link.resolver", "description": "Internal link resolver (verstak://)", "status": "draft" },
     { "name": "importer", "description": "Data import capability", "status": "draft" },
+    { "name": "verstak/import/v1", "description": "Interactive data import planning capability", "status": "draft" },
     { "name": "exporter", "description": "Data export capability", "status": "draft" }
   ]
 }

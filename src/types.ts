@@ -132,6 +132,8 @@ export type Permission =
   | 'files.write'
   | 'files.delete'
   | 'files.openExternal'
+  | 'imports.readExternal'
+  | 'imports.apply'
   | 'workbench.open'
   | 'storage.namespace'
   | 'storage.migrations'
@@ -152,6 +154,77 @@ export interface PermissionEntry {
   name: Permission;
   description: string;
   dangerous: boolean;
+}
+
+// ─── Import API ─────────────────────────────────────────────
+
+export type ImportSourceKind = 'directory' | 'archive';
+export type ImportEntryKind = 'directory' | 'file';
+export type ImportPlanNodeKind = 'folder' | 'workspace' | 'note' | 'file' | 'skip';
+
+export interface ImportSourceSession {
+  sourceHandle: string;
+  kind: ImportSourceKind;
+  displayPath: string;
+  displayName: string;
+  fingerprint: string;
+  entryCount: number;
+  totalBytes: number;
+}
+
+export interface ImportSourceEntry {
+  id: string;
+  path: string;
+  kind: ImportEntryKind;
+  size: number;
+  modifiedAt: string;
+  mediaHint: string;
+}
+
+export interface ImportEntryPage {
+  entries: ImportSourceEntry[];
+  nextCursor: string;
+  fingerprint: string;
+}
+
+export interface ImportPlanNode {
+  id: string;
+  parentId: string;
+  kind: ImportPlanNodeKind;
+  name: string;
+  targetSubpath?: string;
+  templateId?: string;
+  text?: string;
+  sourceEntryId?: string;
+  sourcePath?: string;
+  modifiedAt?: string;
+}
+
+export interface ImportPlan {
+  schemaVersion: 1;
+  sourceHandle: string;
+  sourceFingerprint: string;
+  runName: string;
+  nodes: ImportPlanNode[];
+}
+
+export interface ImportProgress {
+  sourceHandle: string;
+  phase: 'indexing' | 'validating' | 'staging' | 'publishing' | 'refreshing';
+  completed: number;
+  total: number;
+  cancellable: boolean;
+  message: string;
+}
+
+export interface ImportApplyResult {
+  runPath: string;
+  folders: number;
+  workspaces: number;
+  notes: number;
+  files: number;
+  skipped: number;
+  warnings: string[];
 }
 
 // ─── Files API ──────────────────────────────────────────────

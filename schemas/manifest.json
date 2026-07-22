@@ -113,6 +113,8 @@
           "files.write",
           "files.delete",
           "files.openExternal",
+          "imports.readExternal",
+          "imports.apply",
           "workbench.open",
           "storage.namespace",
           "storage.migrations",

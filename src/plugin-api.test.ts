@@ -179,6 +179,59 @@ describe('VerstakPluginAPI contract', () => {
     }
   });
 
+  test('generic import contract is registered and mockable', async () => {
+    const capabilities = ((capabilitiesSchema as any).capabilities || []) as Array<{ name: string; status: string }>;
+    const permissions = ((permissionsSchema as any).permissions || []) as Array<{ name: string; dangerous: boolean }>;
+    const permissionEnum = ((manifestSchema as any).properties.permissions.items.enum || []) as string[];
+
+    expect(capabilities).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'verstak/core/import/v1', status: 'draft' }),
+      expect.objectContaining({ name: 'verstak/import/v1', status: 'draft' }),
+    ]));
+    expect(permissions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'imports.readExternal', dangerous: true }),
+      expect.objectContaining({ name: 'imports.apply', dangerous: true }),
+    ]));
+    expect(permissionEnum).toEqual(expect.arrayContaining(['imports.readExternal', 'imports.apply']));
+
+    const api = createMockPluginAPI('verstak.import', {
+      importSources: [{
+        session: {
+          sourceHandle: 'source-1',
+          kind: 'directory',
+          displayPath: '/chosen/wiki',
+          displayName: 'wiki',
+          fingerprint: 'fp-1',
+          entryCount: 1,
+          totalBytes: 4,
+        },
+        entries: [{
+          id: 'entry-1',
+          path: 'pages/start.txt',
+          kind: 'file',
+          size: 4,
+          modifiedAt: '2026-07-23T00:00:00Z',
+          mediaHint: 'text/plain',
+        }],
+        textByEntryId: { 'entry-1': 'test' },
+      }],
+    });
+
+    const source = await api.imports.selectDirectory();
+    expect(source?.sourceHandle).toBe('source-1');
+    expect((await api.imports.listEntries('source-1')).entries).toHaveLength(1);
+    expect(await api.imports.readText('source-1', 'entry-1')).toBe('test');
+    await expect(api.imports.applyPlan('source-1', {
+      schemaVersion: 1,
+      sourceHandle: 'other-source',
+      sourceFingerprint: 'fp-1',
+      runName: 'DokuWiki — 2026-07-23 12-30-00',
+      nodes: [],
+    })).rejects.toThrow('source-handle-mismatch');
+    await api.imports.cancel('source-1');
+    await api.imports.closeSource('source-1');
+  });
+
   test('file.changed schema documents watcher refresh payload', () => {
     const fileChanged = (vaultEventsSchema as any).events.find((event: any) => event.name === 'file.changed');
 

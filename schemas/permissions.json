@@ -34,6 +34,8 @@
     { "name": "files.write", "description": "Create folders, write bounded text or byte payloads, and move paths through the vault Files API", "dangerous": true },
     { "name": "files.delete", "description": "Trash vault files and folders and permanently delete trash entries through the vault Files API", "dangerous": true },
     { "name": "files.openExternal", "description": "Open vault files and folders in external OS applications", "dangerous": true },
+    { "name": "imports.readExternal", "description": "Select and read bounded entries from an external directory or supported archive", "dangerous": true },
+    { "name": "imports.apply", "description": "Stage and publish a reviewed import plan inside the current vault", "dangerous": true },
     { "name": "storage.namespace", "description": "Read/write plugin's own storage namespace", "dangerous": false },
     { "name": "storage.migrations", "description": "Run database migrations in plugin namespace", "dangerous": false },
     { "name": "events.publish", "description": "Publish events to the event bus", "dangerous": false },

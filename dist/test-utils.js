@@ -51,6 +51,8 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
     const pluginData = new Map();
     const commands = new Map();
     const eventHandlers = new Map();
+    const importProgressHandlers = new Map();
+    const closedImportSources = new Set();
     const files = new Map();
     const trashEntries = [];
     const trashPayloads = new Map();
@@ -231,6 +233,74 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
                 return () => {
                     eventHandlers.set(eventName, (eventHandlers.get(eventName) || []).filter((item) => item !== handler));
                 };
+            }),
+        },
+        imports: {
+            selectDirectory: vi.fn(async () => (options.importSources?.find((source) => source.session.kind === 'directory')?.session ?? null)),
+            selectArchive: vi.fn(async () => (options.importSources?.find((source) => source.session.kind === 'archive')?.session ?? null)),
+            listEntries: vi.fn(async (sourceHandle, cursor = '') => {
+                const source = options.importSources?.find((candidate) => candidate.session.sourceHandle === sourceHandle);
+                if (!source || closedImportSources.has(sourceHandle))
+                    throw new Error(`source-session-not-found: ${sourceHandle}`);
+                const offset = cursor ? Number(cursor) : 0;
+                const entries = source.entries.slice(offset, offset + 500);
+                const nextOffset = offset + entries.length;
+                return {
+                    entries,
+                    nextCursor: nextOffset < source.entries.length ? String(nextOffset) : '',
+                    fingerprint: source.session.fingerprint,
+                };
+            }),
+            readText: vi.fn(async (sourceHandle, entryId) => {
+                const source = options.importSources?.find((candidate) => candidate.session.sourceHandle === sourceHandle);
+                if (!source || closedImportSources.has(sourceHandle))
+                    throw new Error(`source-session-not-found: ${sourceHandle}`);
+                if (!Object.prototype.hasOwnProperty.call(source.textByEntryId, entryId)) {
+                    throw new Error(`source-entry-not-found: ${entryId}`);
+                }
+                return source.textByEntryId[entryId];
+            }),
+            onProgress: vi.fn((sourceHandle, listener) => {
+                const handlers = importProgressHandlers.get(sourceHandle) || [];
+                handlers.push(listener);
+                importProgressHandlers.set(sourceHandle, handlers);
+                return () => {
+                    importProgressHandlers.set(sourceHandle, (importProgressHandlers.get(sourceHandle) || []).filter((item) => item !== listener));
+                };
+            }),
+            applyPlan: vi.fn(async (sourceHandle, plan) => {
+                const source = options.importSources?.find((candidate) => candidate.session.sourceHandle === sourceHandle);
+                if (!source || closedImportSources.has(sourceHandle))
+                    throw new Error(`source-session-not-found: ${sourceHandle}`);
+                if (plan.sourceHandle !== sourceHandle)
+                    throw new Error(`source-handle-mismatch: ${plan.sourceHandle}`);
+                const progress = {
+                    sourceHandle,
+                    phase: 'staging',
+                    completed: plan.nodes.length,
+                    total: plan.nodes.length,
+                    cancellable: true,
+                    message: '',
+                };
+                (importProgressHandlers.get(sourceHandle) || []).slice().forEach((handler) => handler(progress));
+                return {
+                    runPath: `Импортировано/${plan.runName}`,
+                    folders: plan.nodes.filter((node) => node.kind === 'folder').length,
+                    workspaces: plan.nodes.filter((node) => node.kind === 'workspace').length,
+                    notes: plan.nodes.filter((node) => node.kind === 'note').length,
+                    files: plan.nodes.filter((node) => node.kind === 'file').length,
+                    skipped: plan.nodes.filter((node) => node.kind === 'skip').length,
+                    warnings: [],
+                };
+            }),
+            cancel: vi.fn(async (sourceHandle) => {
+                if (!options.importSources?.some((source) => source.session.sourceHandle === sourceHandle)) {
+                    throw new Error(`source-session-not-found: ${sourceHandle}`);
+                }
+            }),
+            closeSource: vi.fn(async (sourceHandle) => {
+                closedImportSources.add(sourceHandle);
+                importProgressHandlers.delete(sourceHandle);
             }),
         },
         files: {

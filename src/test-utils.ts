@@ -1,6 +1,14 @@
 // Verstak Plugin SDK — Test Utilities
 
-import type { PluginManifest, PluginState, RegisteredContributionPoints } from './types';
+import type {
+  ImportPlan,
+  ImportProgress,
+  ImportSourceEntry,
+  ImportSourceSession,
+  PluginManifest,
+  PluginState,
+  RegisteredContributionPoints,
+} from './types';
 import type { PluginCommandHandler, PluginLocale, TranslationParams, VerstakPluginAPI } from './plugin-api';
 
 const mockCommandHandlers = new Map<string, PluginCommandHandler>();
@@ -14,6 +22,11 @@ export interface MockPluginAPIOptions {
   locale?: PluginLocale;
   defaultLocale?: PluginLocale;
   messages?: Partial<Record<PluginLocale, Record<string, string>>>;
+  importSources?: Array<{
+    session: ImportSourceSession;
+    entries: ImportSourceEntry[];
+    textByEntryId: Record<string, string>;
+  }>;
 }
 
 function interpolateMessage(message: string, params?: TranslationParams): string {
@@ -68,6 +81,8 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
   const pluginData = new Map<string, Record<string, unknown>>();
   const commands = new Map<string, PluginCommandHandler>();
   const eventHandlers = new Map<string, Array<(event: any) => void>>();
+  const importProgressHandlers = new Map<string, Array<(progress: ImportProgress) => void>>();
+  const closedImportSources = new Set<string>();
   const files = new Map<string, { type: 'file' | 'folder'; content?: string; modifiedAt: string }>();
   const trashEntries: Array<{ originalPath: string; trashPath: string; trashId: string; deletedAt: string; originalType: 'file' | 'folder'; basename: string }> = [];
   const trashPayloads = new Map<string, Array<{ suffix: string; node: { type: 'file' | 'folder'; content?: string; modifiedAt: string } }>>();
@@ -245,6 +260,74 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
         return () => {
           eventHandlers.set(eventName, (eventHandlers.get(eventName) || []).filter((item) => item !== handler));
         };
+      }),
+    },
+    imports: {
+      selectDirectory: vi.fn(async () => (
+        options.importSources?.find((source) => source.session.kind === 'directory')?.session ?? null
+      )),
+      selectArchive: vi.fn(async () => (
+        options.importSources?.find((source) => source.session.kind === 'archive')?.session ?? null
+      )),
+      listEntries: vi.fn(async (sourceHandle: string, cursor = '') => {
+        const source = options.importSources?.find((candidate) => candidate.session.sourceHandle === sourceHandle);
+        if (!source || closedImportSources.has(sourceHandle)) throw new Error(`source-session-not-found: ${sourceHandle}`);
+        const offset = cursor ? Number(cursor) : 0;
+        const entries = source.entries.slice(offset, offset + 500);
+        const nextOffset = offset + entries.length;
+        return {
+          entries,
+          nextCursor: nextOffset < source.entries.length ? String(nextOffset) : '',
+          fingerprint: source.session.fingerprint,
+        };
+      }),
+      readText: vi.fn(async (sourceHandle: string, entryId: string) => {
+        const source = options.importSources?.find((candidate) => candidate.session.sourceHandle === sourceHandle);
+        if (!source || closedImportSources.has(sourceHandle)) throw new Error(`source-session-not-found: ${sourceHandle}`);
+        if (!Object.prototype.hasOwnProperty.call(source.textByEntryId, entryId)) {
+          throw new Error(`source-entry-not-found: ${entryId}`);
+        }
+        return source.textByEntryId[entryId];
+      }),
+      onProgress: vi.fn((sourceHandle: string, listener: (progress: ImportProgress) => void) => {
+        const handlers = importProgressHandlers.get(sourceHandle) || [];
+        handlers.push(listener);
+        importProgressHandlers.set(sourceHandle, handlers);
+        return () => {
+          importProgressHandlers.set(sourceHandle, (importProgressHandlers.get(sourceHandle) || []).filter((item) => item !== listener));
+        };
+      }),
+      applyPlan: vi.fn(async (sourceHandle: string, plan: ImportPlan) => {
+        const source = options.importSources?.find((candidate) => candidate.session.sourceHandle === sourceHandle);
+        if (!source || closedImportSources.has(sourceHandle)) throw new Error(`source-session-not-found: ${sourceHandle}`);
+        if (plan.sourceHandle !== sourceHandle) throw new Error(`source-handle-mismatch: ${plan.sourceHandle}`);
+        const progress: ImportProgress = {
+          sourceHandle,
+          phase: 'staging',
+          completed: plan.nodes.length,
+          total: plan.nodes.length,
+          cancellable: true,
+          message: '',
+        };
+        (importProgressHandlers.get(sourceHandle) || []).slice().forEach((handler) => handler(progress));
+        return {
+          runPath: `Импортировано/${plan.runName}`,
+          folders: plan.nodes.filter((node) => node.kind === 'folder').length,
+          workspaces: plan.nodes.filter((node) => node.kind === 'workspace').length,
+          notes: plan.nodes.filter((node) => node.kind === 'note').length,
+          files: plan.nodes.filter((node) => node.kind === 'file').length,
+          skipped: plan.nodes.filter((node) => node.kind === 'skip').length,
+          warnings: [],
+        };
+      }),
+      cancel: vi.fn(async (sourceHandle: string) => {
+        if (!options.importSources?.some((source) => source.session.sourceHandle === sourceHandle)) {
+          throw new Error(`source-session-not-found: ${sourceHandle}`);
+        }
+      }),
+      closeSource: vi.fn(async (sourceHandle: string) => {
+        closedImportSources.add(sourceHandle);
+        importProgressHandlers.delete(sourceHandle);
       }),
     },
     files: {
