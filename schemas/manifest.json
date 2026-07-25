@@ -17,7 +17,9 @@
     "schemaVersion": {
       "type": "integer",
       "description": "Schema version for the manifest format",
-      "enum": [1]
+      "enum": [
+        1
+      ]
     },
     "id": {
       "type": "string",
@@ -45,7 +47,15 @@
     "source": {
       "type": "string",
       "description": "Plugin source classification",
-      "enum": ["official", "local", "third-party"]
+      "enum": [
+        "official",
+        "local",
+        "third-party"
+      ]
+    },
+    "development": {
+      "type": "boolean",
+      "description": "Development-only plugin. Built and installed for local development, excluded from release artifacts. Absent or false means the plugin ships to users."
     },
     "icon": {
       "type": "string",
@@ -73,7 +83,10 @@
           "minProperties": 1
         }
       },
-      "required": ["defaultLocale", "locales"],
+      "required": [
+        "defaultLocale",
+        "locales"
+      ],
       "additionalProperties": false
     },
     "provides": {
@@ -147,7 +160,9 @@
           "description": "Path to the frontend stylesheet"
         }
       },
-      "required": ["entry"]
+      "required": [
+        "entry"
+      ]
     },
     "backend": {
       "type": "object",
@@ -155,7 +170,9 @@
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["sidecar"],
+          "enum": [
+            "sidecar"
+          ],
           "description": "Backend type (only 'sidecar' supported)"
         },
         "entry": {
@@ -175,7 +192,11 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["rpc", "stdio", "tcp"],
+              "enum": [
+                "rpc",
+                "stdio",
+                "tcp"
+              ],
               "default": "rpc"
             },
             "timeout": {
@@ -186,7 +207,10 @@
           }
         }
       },
-      "required": ["type", "entry"]
+      "required": [
+        "type",
+        "entry"
+      ]
     },
     "migrations": {
       "type": "object",
@@ -299,147 +323,278 @@
     "ContributionView": {
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
-        "icon": { "type": "string" },
-        "component": { "type": "string" }
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "component": {
+          "type": "string"
+        }
       },
-      "required": ["id", "component"]
+      "required": [
+        "id",
+        "component"
+      ]
     },
     "ContributionCommand": {
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
-        "keybinding": { "type": "string" },
-        "icon": { "type": "string" },
-        "handler": { "type": "string" }
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "keybinding": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "handler": {
+          "type": "string"
+        }
       },
-      "required": ["id", "title"]
+      "required": [
+        "id",
+        "title"
+      ]
     },
     "ContributionSettingsPanel": {
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
-        "component": { "type": "string" },
-        "icon": { "type": "string" }
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "component": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        }
       },
-      "required": ["id", "title", "component"]
+      "required": [
+        "id",
+        "title",
+        "component"
+      ]
     },
     "ContributionSidebarItem": {
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
-        "icon": { "type": "string" },
-        "view": { "type": "string" },
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "view": {
+          "type": "string"
+        },
         "position": {
           "type": "integer",
           "description": "Sort order (lower = higher)"
         }
       },
-      "required": ["id", "title", "view"]
+      "required": [
+        "id",
+        "title",
+        "view"
+      ]
     },
     "ContributionAction": {
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "label": { "type": "string" },
-        "icon": { "type": "string" },
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
         "capability": {
           "type": "string",
           "description": "Required capability for this action to appear"
         },
-        "handler": { "type": "string" }
+        "handler": {
+          "type": "string"
+        }
       },
-      "required": ["id", "label"]
+      "required": [
+        "id",
+        "label"
+      ]
     },
     "ContributionContextMenuEntry": {
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "label": { "type": "string" },
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
         "context": {
           "type": "string",
-          "enum": ["file", "note", "case", "folder"]
+          "enum": [
+            "file",
+            "note",
+            "case",
+            "folder"
+          ]
         },
-        "group": { "type": "string" },
-        "capability": { "type": "string" },
-        "handler": { "type": "string" }
+        "group": {
+          "type": "string"
+        },
+        "capability": {
+          "type": "string"
+        },
+        "handler": {
+          "type": "string"
+        }
       },
-      "required": ["id", "label", "context"]
+      "required": [
+        "id",
+        "label",
+        "context"
+      ]
     },
     "ContributionSearchProvider": {
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "label": { "type": "string" },
-        "handler": { "type": "string" }
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "handler": {
+          "type": "string"
+        }
       },
-      "required": ["id", "label", "handler"]
+      "required": [
+        "id",
+        "label",
+        "handler"
+      ]
     },
     "ContributionActivityProvider": {
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
+        "id": {
+          "type": "string"
+        },
         "events": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
-        "handler": { "type": "string" }
+        "handler": {
+          "type": "string"
+        }
       },
-      "required": ["id", "handler"]
+      "required": [
+        "id",
+        "handler"
+      ]
     },
     "ContributionStatusBarItem": {
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "label": { "type": "string" },
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
         "position": {
           "type": "string",
-          "enum": ["left", "right"]
+          "enum": [
+            "left",
+            "right"
+          ]
         },
-        "handler": { "type": "string" }
+        "handler": {
+          "type": "string"
+        }
       },
-      "required": ["id", "label"]
+      "required": [
+        "id",
+        "label"
+      ]
     },
     "OpenProviderSupport": {
       "type": "object",
       "properties": {
         "kind": {
           "type": "string",
-          "enum": ["vault-file", "secret"]
+          "enum": [
+            "vault-file",
+            "secret"
+          ]
         },
         "extensions": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "mime": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "contexts": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "modes": {
           "type": "array",
           "items": {
             "type": "string",
-            "enum": ["view", "edit"]
+            "enum": [
+              "view",
+              "edit"
+            ]
           }
         }
       },
-      "required": ["kind"]
+      "required": [
+        "kind"
+      ]
     },
     "ContributionOpenProvider": {
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
-        "priority": { "type": "integer" },
-        "component": { "type": "string" },
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer"
+        },
+        "component": {
+          "type": "string"
+        },
         "supports": {
           "type": "array",
           "items": {
@@ -448,17 +603,34 @@
           "minItems": 1
         }
       },
-      "required": ["id", "title", "component", "supports"]
+      "required": [
+        "id",
+        "title",
+        "component",
+        "supports"
+      ]
     },
     "ContributionWorkspaceItem": {
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
-        "icon": { "type": "string" },
-        "component": { "type": "string" }
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "component": {
+          "type": "string"
+        }
       },
-      "required": ["id", "title", "component"]
+      "required": [
+        "id",
+        "title",
+        "component"
+      ]
     }
   }
 }
