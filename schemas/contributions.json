@@ -16,36 +16,143 @@
     "ContributionPoint": {
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "description": { "type": "string" },
+        "id": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
         "type": {
           "type": "string",
-          "enum": ["view", "command", "item", "provider", "panel", "action", "entry"]
+          "enum": [
+            "view",
+            "command",
+            "item",
+            "provider",
+            "panel",
+            "action",
+            "entry"
+          ]
         },
         "status": {
           "type": "string",
-          "enum": ["stable", "draft", "deprecated"]
+          "enum": [
+            "stable",
+            "draft",
+            "deprecated"
+          ]
         }
       },
-      "required": ["id", "description", "type", "status"]
+      "required": [
+        "id",
+        "description",
+        "type",
+        "status"
+      ]
     }
   },
   "contributionPoints": [
-    { "id": "sidebar.items", "description": "Sidebar navigation items", "type": "item", "status": "draft" },
-    { "id": "main.views", "description": "Main content views", "type": "view", "status": "draft" },
-    { "id": "case.tabs", "description": "Case detail tabs", "type": "view", "status": "draft" },
-    { "id": "file.actions", "description": "File context actions", "type": "action", "status": "draft" },
-    { "id": "note.actions", "description": "Note context actions", "type": "action", "status": "draft" },
-    { "id": "context.menu", "description": "Context menu entries", "type": "entry", "status": "draft" },
-    { "id": "commands", "description": "Command palette commands", "type": "command", "status": "draft" },
-    { "id": "settings.panels", "description": "Plugin settings panels", "type": "panel", "status": "draft" },
-    { "id": "search.providers", "description": "Search result providers", "type": "provider", "status": "draft" },
-    { "id": "activity.providers", "description": "Activity event providers", "type": "provider", "status": "draft" },
-    { "id": "status.bar.items", "description": "Status bar items", "type": "item", "status": "draft" },
-    { "id": "importers", "description": "Data import providers", "type": "provider", "status": "draft" },
-    { "id": "exporters", "description": "Data export providers", "type": "provider", "status": "draft" },
-    { "id": "protocol.receivers", "description": "Custom protocol message receivers", "type": "provider", "status": "draft" },
-    { "id": "openProviders", "description": "Editor/viewer open providers for workbench resource routing", "type": "provider", "status": "draft" },
-    { "id": "workspaceItems", "description": "Workspace tool items shown in workspace host area", "type": "view", "status": "draft" }
+    {
+      "id": "sidebar.items",
+      "description": "Sidebar navigation items",
+      "type": "item",
+      "status": "draft"
+    },
+    {
+      "id": "main.views",
+      "description": "Main content views",
+      "type": "view",
+      "status": "draft"
+    },
+    {
+      "id": "case.tabs",
+      "description": "Case detail tabs",
+      "type": "view",
+      "status": "draft"
+    },
+    {
+      "id": "file.actions",
+      "description": "File context actions",
+      "type": "action",
+      "status": "draft"
+    },
+    {
+      "id": "note.actions",
+      "description": "Note context actions",
+      "type": "action",
+      "status": "draft"
+    },
+    {
+      "id": "context.menu",
+      "description": "Context menu entries",
+      "type": "entry",
+      "status": "draft"
+    },
+    {
+      "id": "commands",
+      "description": "Command palette commands",
+      "type": "command",
+      "status": "draft"
+    },
+    {
+      "id": "settings.panels",
+      "description": "Plugin settings panels",
+      "type": "panel",
+      "status": "draft"
+    },
+    {
+      "id": "search.providers",
+      "description": "Search result providers",
+      "type": "provider",
+      "status": "draft"
+    },
+    {
+      "id": "activity.providers",
+      "description": "Activity event providers",
+      "type": "provider",
+      "status": "draft"
+    },
+    {
+      "id": "worklogProviders",
+      "description": "Plugins that can propose journal entries. The Journal asks each one for its proposals, so a plugin other than Activity can suggest entries.",
+      "type": "provider",
+      "status": "draft"
+    },
+    {
+      "id": "status.bar.items",
+      "description": "Status bar items",
+      "type": "item",
+      "status": "draft"
+    },
+    {
+      "id": "importers",
+      "description": "Data import providers",
+      "type": "provider",
+      "status": "draft"
+    },
+    {
+      "id": "exporters",
+      "description": "Data export providers",
+      "type": "provider",
+      "status": "draft"
+    },
+    {
+      "id": "protocol.receivers",
+      "description": "Custom protocol message receivers",
+      "type": "provider",
+      "status": "draft"
+    },
+    {
+      "id": "openProviders",
+      "description": "Editor/viewer open providers for workbench resource routing",
+      "type": "provider",
+      "status": "draft"
+    },
+    {
+      "id": "workspaceItems",
+      "description": "Workspace tool items shown in workspace host area",
+      "type": "view",
+      "status": "draft"
+    }
   ]
 }
