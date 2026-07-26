@@ -278,6 +278,46 @@ export interface MovePathOptions {
   overwrite?: boolean;
 }
 
+/** One source-to-destination pair in a bulk move or copy. */
+export interface PathTransfer {
+  from: string;
+  to: string;
+}
+
+/** What became of a single item in a bulk transfer. */
+export interface TransferResult {
+  from: string;
+  to: string;
+  /** Absent when the item succeeded. */
+  error?: string;
+  /** The batch was cancelled before it reached this item. */
+  skipped?: boolean;
+}
+
+/**
+ * The result of a bulk transfer.
+ *
+ * One failing item does not abandon the rest, so a plugin can tell the user
+ * exactly which files did not land instead of only that "something failed".
+ */
+export interface TransferOutcome {
+  results: TransferResult[];
+  succeeded: number;
+  failed: number;
+  cancelled: boolean;
+}
+
+/** Progress of a bulk transfer, reported after each item. */
+export interface TransferProgress {
+  transferId: string;
+  completed: number;
+  total: number;
+  succeeded: number;
+  failed: number;
+  /** Destination path of the item just processed. */
+  path: string;
+}
+
 export interface RestoreTrashOptions {
   /** Restore to another vault-relative path instead of the original path. */
   targetPath?: string;

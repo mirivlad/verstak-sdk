@@ -18,9 +18,12 @@ import type {
   MovePathOptions,
   OpenResourceRequest,
   OpenResourceResult,
+  PathTransfer,
   PluginSettings,
   RegisteredContributionPoints,
   RestoreTrashOptions,
+  TransferOutcome,
+  TransferProgress,
   TrashEntry,
   TrashResult,
   WriteTextOptions,
@@ -224,6 +227,26 @@ export interface VerstakPluginAPI {
     writeBytes(relativePath: string, dataBase64: string, options?: WriteTextOptions): Promise<void>;
     createFolder(relativePath: string): Promise<void>;
     move(fromRelativePath: string, toRelativePath: string, options?: MovePathOptions): Promise<void>;
+    copy(fromRelativePath: string, toRelativePath: string, options?: MovePathOptions): Promise<void>;
+    /**
+     * Move many paths in one call.
+     *
+     * Prefer this to a loop over `move`. Each individual call costs the host a
+     * sync recording of its own; one call records the whole batch once, which
+     * is the difference between a large paste completing promptly and appearing
+     * to hang. Pass a `transferId` to receive progress via `onTransferProgress`
+     * and to be able to `cancelTransfer`.
+     */
+    moveMany(transfers: PathTransfer[], options?: MovePathOptions & { transferId?: string }): Promise<TransferOutcome>;
+    /** Copy many paths in one call. See `moveMany`. */
+    copyMany(transfers: PathTransfer[], options?: MovePathOptions & { transferId?: string }): Promise<TransferOutcome>;
+    /**
+     * Ask a running bulk transfer to stop. Items already transferred stay where
+     * they are: this stops the operation, it does not undo it.
+     */
+    cancelTransfer(transferId: string): Promise<void>;
+    /** Observe the progress of bulk transfers started by this plugin. */
+    onTransferProgress(listener: (progress: TransferProgress) => void): Unsubscribe;
     trash(relativePath: string): Promise<TrashResult>;
     listTrash(): Promise<TrashEntry[]>;
     restoreTrash(trashId: string, options?: RestoreTrashOptions): Promise<string>;
