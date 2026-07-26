@@ -622,6 +622,10 @@
         "icon": {
           "type": "string"
         },
+        "order": {
+          "type": "integer",
+          "description": "Placement among a Deal’s tool tabs. Lower comes first; items without one sort after those with one, then by title."
+        },
         "component": {
           "type": "string"
         }
