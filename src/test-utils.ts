@@ -5,9 +5,13 @@ import type {
   ImportProgress,
   ImportSourceEntry,
   ImportSourceSession,
+  MovePathOptions,
+  PathTransfer,
   PluginManifest,
   PluginState,
   RegisteredContributionPoints,
+  TransferOutcome,
+  TransferProgress,
 } from './types';
 import type { PluginCommandHandler, PluginLocale, TranslationParams, VerstakPluginAPI } from './plugin-api';
 
@@ -86,6 +90,85 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
   const files = new Map<string, { type: 'file' | 'folder'; content?: string; modifiedAt: string }>();
   const trashEntries: Array<{ originalPath: string; trashPath: string; trashId: string; deletedAt: string; originalType: 'file' | 'folder'; basename: string }> = [];
   const trashPayloads = new Map<string, Array<{ suffix: string; node: { type: 'file' | 'folder'; content?: string; modifiedAt: string } }>>();
+  const cancelledTransfers = new Set<string>();
+  const transferProgressListeners = new Set<(progress: TransferProgress) => void>();
+
+  const movePath = async (fromRelativePath: string, toRelativePath: string, options: MovePathOptions = {}) => {
+    const from = normalizePath(fromRelativePath);
+    const to = normalizePath(toRelativePath);
+    const node = files.get(from);
+    if (!node) throw new Error(`not-found: ${from}`);
+    if (node.type === 'folder' && (to === from || to.startsWith(`${from}/`))) {
+      throw new Error(`move-into-self: ${from} -> ${to}`);
+    }
+    if (files.has(to) && !options.overwrite) throw new Error(`conflict: ${to}`);
+    const parent = parentPath(to);
+    if (!files.get(parent) || files.get(parent)?.type !== 'folder') throw new Error(`parent-not-found: ${parent}`);
+    Array.from(files.entries())
+      .filter(([path]) => path === from || path.startsWith(`${from}/`))
+      .forEach(([path, moving]) => {
+        files.set(`${to}${path.slice(from.length)}`, moving);
+        files.delete(path);
+      });
+  };
+
+  const copyPath = async (fromRelativePath: string, toRelativePath: string, options: MovePathOptions = {}) => {
+    const from = normalizePath(fromRelativePath);
+    const to = normalizePath(toRelativePath);
+    const node = files.get(from);
+    if (!node) throw new Error(`not-found: ${from}`);
+    if (node.type === 'folder' && (to === from || to.startsWith(`${from}/`))) {
+      throw new Error(`copy-into-self: ${from} -> ${to}`);
+    }
+    if (files.has(to) && !options.overwrite) throw new Error(`conflict: ${to}`);
+    const parent = parentPath(to);
+    if (!files.get(parent) || files.get(parent)?.type !== 'folder') throw new Error(`parent-not-found: ${parent}`);
+    Array.from(files.entries())
+      .filter(([path]) => path === from || path.startsWith(`${from}/`))
+      .forEach(([path, copying]) => {
+        files.set(`${to}${path.slice(from.length)}`, { ...copying });
+      });
+  };
+
+  // Mirrors the host: a failing item does not abandon the batch, cancellation
+  // stops it without undoing what already happened, and progress is reported
+  // after every item.
+  const runTransfers = async (
+    transfers: PathTransfer[],
+    options: MovePathOptions & { transferId?: string },
+    apply: (transfer: PathTransfer) => Promise<void>
+  ): Promise<TransferOutcome> => {
+    const transferId = options.transferId || '';
+    const outcome: TransferOutcome = { results: [], succeeded: 0, failed: 0, cancelled: false };
+    for (let index = 0; index < transfers.length; index += 1) {
+      if (transferId && cancelledTransfers.has(transferId)) {
+        outcome.cancelled = true;
+        transfers.slice(index).forEach((remaining) => {
+          outcome.results.push({ from: remaining.from, to: remaining.to, skipped: true });
+        });
+        break;
+      }
+      const transfer = transfers[index];
+      try {
+        await apply(transfer);
+        outcome.succeeded += 1;
+        outcome.results.push({ from: transfer.from, to: transfer.to });
+      } catch (error) {
+        outcome.failed += 1;
+        outcome.results.push({ from: transfer.from, to: transfer.to, error: String((error as Error).message || error) });
+      }
+      transferProgressListeners.forEach((listener) => listener({
+        transferId,
+        completed: index + 1,
+        total: transfers.length,
+        succeeded: outcome.succeeded,
+        failed: outcome.failed,
+        path: transfer.to,
+      }));
+    }
+    cancelledTransfers.delete(transferId);
+    return outcome;
+  };
   files.set('', { type: 'folder', modifiedAt: new Date().toISOString() });
 
   function normalizePath(path: string, allowRoot = false): string {
@@ -393,23 +476,20 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
         if (!files.get(parent) || files.get(parent)?.type !== 'folder') throw new Error(`parent-not-found: ${parent}`);
         files.set(path, { type: 'folder', modifiedAt: new Date().toISOString() });
       }),
-      move: vi.fn(async (fromRelativePath: string, toRelativePath: string, options = {}) => {
-        const from = normalizePath(fromRelativePath);
-        const to = normalizePath(toRelativePath);
-        const node = files.get(from);
-        if (!node) throw new Error(`not-found: ${from}`);
-        if (node.type === 'folder' && (to === from || to.startsWith(`${from}/`))) {
-          throw new Error(`move-into-self: ${from} -> ${to}`);
-        }
-        if (files.has(to) && !options.overwrite) throw new Error(`conflict: ${to}`);
-        const parent = parentPath(to);
-        if (!files.get(parent) || files.get(parent)?.type !== 'folder') throw new Error(`parent-not-found: ${parent}`);
-        const moving = Array.from(files.entries()).filter(([path]) => path === from || path.startsWith(`${from}/`));
-        moving.forEach(([path, movingNode]) => {
-          const suffix = path.slice(from.length);
-          files.set(`${to}${suffix}`, movingNode);
-          files.delete(path);
-        });
+      move: vi.fn(movePath),
+      copy: vi.fn(copyPath),
+      moveMany: vi.fn((transfers: PathTransfer[], options: MovePathOptions & { transferId?: string } = {}) =>
+        runTransfers(transfers, options, (transfer) => movePath(transfer.from, transfer.to, options))
+      ),
+      copyMany: vi.fn((transfers: PathTransfer[], options: MovePathOptions & { transferId?: string } = {}) =>
+        runTransfers(transfers, options, (transfer) => copyPath(transfer.from, transfer.to, options))
+      ),
+      cancelTransfer: vi.fn(async (transferId: string) => {
+        cancelledTransfers.add(transferId);
+      }),
+      onTransferProgress: vi.fn((listener: (progress: TransferProgress) => void) => {
+        transferProgressListeners.add(listener);
+        return () => { transferProgressListeners.delete(listener); };
       }),
       trash: vi.fn(async (relativePath: string) => {
         const path = normalizePath(relativePath);

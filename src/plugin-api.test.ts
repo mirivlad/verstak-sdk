@@ -532,6 +532,66 @@ describe('VerstakPluginAPI contract', () => {
     await expect(api.files.readText('.Verstak/vault.json')).rejects.toThrow('reserved-path');
   });
 
+  test('bulk transfer reports every item, keeps going past a failure, and emits progress', async () => {
+    const api = createMockPluginAPI('files.plugin');
+    await api.files.createFolder('From');
+    await api.files.createFolder('To');
+    for (const name of ['a.txt', 'b.txt', 'c.txt']) {
+      await api.files.writeText(`From/${name}`, name, { createIfMissing: true });
+    }
+
+    const progress: number[] = [];
+    const unsubscribe = api.files.onTransferProgress((event) => progress.push(event.completed));
+
+    const outcome = await api.files.moveMany([
+      { from: 'From/missing.txt', to: 'To/missing.txt' },
+      { from: 'From/a.txt', to: 'To/a.txt' },
+      { from: 'From/b.txt', to: 'To/b.txt' },
+      { from: 'From/c.txt', to: 'To/c.txt' },
+    ], { transferId: 'paste-1' });
+
+    expect(outcome.succeeded).toBe(3);
+    expect(outcome.failed).toBe(1);
+    expect(outcome.cancelled).toBe(false);
+    expect(outcome.results[0].error).toMatch('not-found');
+    expect(progress).toEqual([1, 2, 3, 4]);
+    await expect(api.files.list('To')).resolves.toHaveLength(3);
+
+    unsubscribe();
+  });
+
+  test('a cancelled bulk transfer stops and marks the rest skipped', async () => {
+    const api = createMockPluginAPI('files.plugin');
+    await api.files.createFolder('From');
+    await api.files.createFolder('To');
+    for (const name of ['a.txt', 'b.txt']) {
+      await api.files.writeText(`From/${name}`, name, { createIfMissing: true });
+    }
+
+    await api.files.cancelTransfer('paste-2');
+    const outcome = await api.files.copyMany([
+      { from: 'From/a.txt', to: 'To/a.txt' },
+      { from: 'From/b.txt', to: 'To/b.txt' },
+    ], { transferId: 'paste-2' });
+
+    expect(outcome.cancelled).toBe(true);
+    expect(outcome.succeeded).toBe(0);
+    expect(outcome.results.every((result) => result.skipped)).toBe(true);
+    await expect(api.files.list('To')).resolves.toEqual([]);
+  });
+
+  test('files mock copies without removing the source', async () => {
+    const api = createMockPluginAPI('files.plugin');
+    await api.files.createFolder('From');
+    await api.files.createFolder('To');
+    await api.files.writeText('From/a.txt', 'body', { createIfMissing: true });
+
+    await api.files.copy('From/a.txt', 'To/a.txt');
+
+    await expect(api.files.readText('From/a.txt')).resolves.toBe('body');
+    await expect(api.files.readText('To/a.txt')).resolves.toBe('body');
+  });
+
   test('files mock rejects moving a folder into itself', async () => {
     const api = createMockPluginAPI('files.plugin');
 
