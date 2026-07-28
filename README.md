@@ -110,6 +110,10 @@ read/write/move/trash operations are rejected by the host. Text read/write is
 UTF-8 only; `readText` is limited to 2 MB and `readBytes` returns a bounded
 base64 payload for regular files up to 8 MB.
 
+A write carries `service: true` when the plugin is saving its own records rather
+than producing something for the user. The write is still recorded as activity,
+marked as service, so no tool mistakes the plugin's bookkeeping for work.
+
 Open/edit routing uses `OpenResourceRequest` with `kind: "vault-file"` and
 contexts `generic-text`, `generic-markdown`, and `notes-markdown`. Plugins that
 request routing declare `workbench.open`; editor/viewer plugins contribute
