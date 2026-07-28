@@ -50,9 +50,36 @@ export interface MigrationConfig {
   path: string;
 }
 
+/**
+ * Which of the plugin's own data travels between devices.
+ *
+ * Everything a plugin stores lives under `.verstak`, which the vault scanner
+ * skips on purpose — it is not the user's documents. A set declared here is
+ * carried through the same operation log that carries files.
+ */
 export interface SyncConfig {
-  namespaces?: string[];
-  participate?: boolean;
+  records?: SyncRecordSet[];
+}
+
+/**
+ * One list of records the plugin shares. A record is the unit that travels, so
+ * two devices adding different items produce two records rather than two
+ * versions of one document, and neither has to be thrown away.
+ *
+ * A record changed on both devices is still resolved by server sequence: last
+ * write wins, the same rule the rest of sync follows.
+ */
+export interface SyncRecordSet {
+  /** Names the set in the operation log. Must stay stable across versions. */
+  id: string;
+  /** `settings`: an array under `key`. `data`: a named NDJSON file. */
+  storage: 'settings' | 'data';
+  /** Settings key holding the array. Required when storage is `settings`. */
+  key?: string;
+  /** NDJSON file name without extension. Required when storage is `data`. */
+  name?: string;
+  /** Field identifying a record. Records without one are not carried. */
+  identity: string;
 }
 
 // ─── Core sync wire contract ────────────────────────────────
