@@ -271,6 +271,13 @@ export interface WriteTextOptions {
   createIfMissing?: boolean;
   /** Replace an existing regular file. Existing folders/symlinks are rejected. */
   overwrite?: boolean;
+  /**
+   * The plugin is saving its own records, not producing something for the user.
+   * The write is still recorded as activity, marked as service, so no tool
+   * counts it as work. Set it when the file exists because the plugin needs
+   * somewhere to keep its data; leave it unset when the user made the content.
+   */
+  service?: boolean;
 }
 
 export interface MovePathOptions {
