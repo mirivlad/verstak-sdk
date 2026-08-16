@@ -119,6 +119,12 @@
       "status": "draft"
     },
     {
+      "id": "overviewProviders",
+      "description": "Plugins that provide normalized summary, resume, attention, recent-change, and resource signals for a Deal Overview.",
+      "type": "provider",
+      "status": "draft"
+    },
+    {
       "id": "status.bar.items",
       "description": "Status bar items",
       "type": "item",

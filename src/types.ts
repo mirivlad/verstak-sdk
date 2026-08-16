@@ -385,6 +385,8 @@ export interface ContributionPoints {
   contextMenuEntries?: ContributionContextMenuEntry[];
   searchProviders?: ContributionSearchProvider[];
   activityProviders?: ContributionActivityProvider[];
+  worklogProviders?: ContributionWorklogProvider[];
+  overviewProviders?: ContributionOverviewProvider[];
   statusBarItems?: ContributionStatusBarItem[];
   openProviders?: ContributionOpenProvider[];
   workspaceItems?: ContributionWorkspaceItem[];
@@ -449,6 +451,74 @@ export interface ContributionActivityProvider {
   handler: string;
 }
 
+/** A plugin that can propose Journal/worklog entries. */
+export interface ContributionWorklogProvider {
+  id: string;
+  label: string;
+  handler: string;
+}
+
+/** A plugin that contributes normalized signals to the Deal Overview. */
+export interface ContributionOverviewProvider {
+  id: string;
+  label: string;
+  handler: string;
+}
+
+/** Context passed to every Overview provider command. */
+export interface OverviewProviderRequest {
+  workspaceRootPath: string;
+}
+
+/**
+ * Navigation target for an Overview item. The shell resolves the exact
+ * workspace contribution id instead of guessing a tool from a plugin name.
+ */
+export interface OverviewActionTarget {
+  workspaceItemId: string;
+  toolRequest?: Record<string, unknown>;
+}
+
+export interface OverviewSummaryItem {
+  id: string;
+  label?: string;
+  count: number;
+  detail?: string;
+  /** Lower values are shown first. */
+  order?: number;
+  action?: OverviewActionTarget;
+}
+
+export interface OverviewSignalItem {
+  id: string;
+  title: string;
+  meta?: string;
+  occurredAt?: string;
+  /** Lower values are shown first when time is not the primary sort key. */
+  order?: number;
+  action?: OverviewActionTarget;
+}
+
+export interface OverviewRecentItem extends OverviewSignalItem {
+  /** Stable category id used for filtering. */
+  categoryId: string;
+  /** Optional localized label; the shell may fall back to the target tool title. */
+  categoryLabel?: string;
+}
+
+/**
+ * Data contract returned by an Overview provider. Providers own their storage
+ * and business semantics; the shell owns aggregation, sorting and rendering.
+ */
+export interface OverviewProviderResult {
+  summary?: OverviewSummaryItem[];
+  resume?: OverviewSignalItem[];
+  attention?: OverviewSignalItem[];
+  recent?: OverviewRecentItem[];
+  resources?: OverviewSignalItem[];
+  lastActiveAt?: string;
+}
+
 export interface ContributionStatusBarItem {
   id: string;
   label: string;
@@ -497,6 +567,8 @@ export interface RegisteredContributionPoints {
   contextMenuEntries?: RegisteredContribution<ContributionContextMenuEntry>[];
   searchProviders?: RegisteredContribution<ContributionSearchProvider>[];
   activityProviders?: RegisteredContribution<ContributionActivityProvider>[];
+  worklogProviders?: RegisteredContribution<ContributionWorklogProvider>[];
+  overviewProviders?: RegisteredContribution<ContributionOverviewProvider>[];
   statusBarItems?: RegisteredContribution<ContributionStatusBarItem>[];
   openProviders?: RegisteredContribution<ContributionOpenProvider>[];
   workspaceItems?: RegisteredContribution<ContributionWorkspaceItem>[];
