@@ -1,0 +1,56 @@
+name: one-shot-workspace-contract
+
+on:
+  push:
+    branches:
+      - audit/workspace-path-contract
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: audit/workspace-path-contract
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Add workspace path contract
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/plugin-api.ts')
+          text = path.read_text()
+          anchor = """export interface BrowserReceiverPairing {\n  receiverUrl: string;\n  receiverToken: string;\n}\n\nexport interface VerstakPluginAPI {\n"""
+          replacement = """export interface BrowserReceiverPairing {\n  receiverUrl: string;\n  receiverToken: string;\n}\n\nexport interface PluginWorkspace {\n  id: string;\n  name: string;\n  rootPath: string;\n}\n\nexport interface WorkspacePathResolution {\n  found: boolean;\n  workspaceId?: string;\n  workspaceName?: string;\n  workspaceRootPath?: string;\n  relativePath?: string;\n}\n\nexport interface VerstakPluginAPI {\n"""
+          if text.count(anchor) != 1:
+              raise SystemExit(f'workspace type anchor count: {text.count(anchor)}')
+          text = text.replace(anchor, replacement, 1)
+
+          anchor = """  contributions: {\n    list(): Promise<RegisteredContributionPoints>;\n    list<K extends keyof RegisteredContributionPoints>(\n      point: K\n    ): Promise<NonNullable<RegisteredContributionPoints[K]>>;\n  };\n\n  events: {\n"""
+          replacement = """  contributions: {\n    list(): Promise<RegisteredContributionPoints>;\n    list<K extends keyof RegisteredContributionPoints>(\n      point: K\n    ): Promise<NonNullable<RegisteredContributionPoints[K]>>;\n  };\n\n  workspaces: {\n    /** Deal nodes where this plugin is active. */\n    list(): Promise<PluginWorkspace[]>;\n    /**\n     * Resolve a readable vault-relative path to its owning Deal.\n     * This does not imply that this plugin contributes a workspace item there.\n     */\n    resolvePath(relativePath: string): Promise<WorkspacePathResolution>;\n  };\n\n  events: {\n"""
+          if text.count(anchor) != 1:
+              raise SystemExit(f'workspace API anchor count: {text.count(anchor)}')
+          path.write_text(text.replace(anchor, replacement, 1))
+          PY
+      - name: Verify SDK
+        run: |
+          npm ci --no-audit --no-fund
+          npm run lint
+          npm test
+          npm run build
+      - name: Commit contract
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/plugin-api.ts dist
+          git diff --cached --check
+          git commit -m 'feat: define workspace path resolution API'
+          git push origin HEAD:audit/workspace-path-contract
