@@ -39,6 +39,37 @@ jobs:
           if text.count(anchor) != 1:
               raise SystemExit(f'workspace API anchor count: {text.count(anchor)}')
           path.write_text(text.replace(anchor, replacement, 1))
+
+          path = Path('src/test-utils.ts')
+          text = path.read_text()
+          old = "import type { PluginCommandHandler, PluginLocale, TranslationParams, VerstakPluginAPI } from './plugin-api';"
+          new = "import type { PluginCommandHandler, PluginLocale, PluginWorkspace, TranslationParams, VerstakPluginAPI } from './plugin-api';"
+          if text.count(old) != 1:
+              raise SystemExit(f'test-utils import anchor count: {text.count(old)}')
+          text = text.replace(old, new, 1)
+          old = """  messages?: Partial<Record<PluginLocale, Record<string, string>>>;\n  importSources?: Array<{\n"""
+          new = """  messages?: Partial<Record<PluginLocale, Record<string, string>>>;\n  workspaces?: PluginWorkspace[];\n  importSources?: Array<{\n"""
+          if text.count(old) != 1:
+              raise SystemExit(f'test-utils options anchor count: {text.count(old)}')
+          text = text.replace(old, new, 1)
+          old = """    contributions: {\n      list: vi.fn(async (point?: keyof RegisteredContributionPoints) => {\n        if (!point) return { ...(options.contributions || {}) };\n        return ([...((options.contributions && options.contributions[point]) || [])]) as any;\n      }) as VerstakPluginAPI['contributions']['list'],\n    },\n    events: {\n"""
+          new = """    contributions: {\n      list: vi.fn(async (point?: keyof RegisteredContributionPoints) => {\n        if (!point) return { ...(options.contributions || {}) };\n        return ([...((options.contributions && options.contributions[point]) || [])]) as any;\n      }) as VerstakPluginAPI['contributions']['list'],\n    },\n    workspaces: {\n      list: vi.fn(async () => [...(options.workspaces || [])]),\n      resolvePath: vi.fn(async (relativePath: string) => {\n        const path = normalizePath(relativePath);\n        const candidates = (options.workspaces || [])\n          .filter((workspace) => path === normalizePath(workspace.rootPath) || path.startsWith(`${normalizePath(workspace.rootPath)}/`))\n          .sort((a, b) => normalizePath(b.rootPath).length - normalizePath(a.rootPath).length);\n        const workspace = candidates[0];\n        if (!workspace) return { found: false };\n        const workspaceRootPath = normalizePath(workspace.rootPath);\n        return {\n          found: true,\n          workspaceId: workspace.id,\n          workspaceName: workspace.name,\n          workspaceRootPath,\n          relativePath: path === workspaceRootPath ? '' : path.slice(workspaceRootPath.length + 1),\n        };\n      }),\n    },\n    events: {\n"""
+          if text.count(old) != 1:
+              raise SystemExit(f'test-utils workspaces anchor count: {text.count(old)}')
+          path.write_text(text.replace(old, new, 1))
+
+          path = Path('src/plugin-api.test.ts')
+          text = path.read_text()
+          old = """    expect(typeof api.contributions.list).toBe('function');\n    expect(typeof api.events.publish).toBe('function');\n"""
+          new = """    expect(typeof api.contributions.list).toBe('function');\n    expect(typeof api.workspaces.list).toBe('function');\n    expect(typeof api.workspaces.resolvePath).toBe('function');\n    expect(typeof api.events.publish).toBe('function');\n"""
+          if text.count(old) != 1:
+              raise SystemExit(f'plugin-api shape anchor count: {text.count(old)}')
+          text = text.replace(old, new, 1)
+          marker = """  test('sync status exposes pairing scope and unresolved scanner warning', async () => {\n"""
+          test = """  test('mock workspace resolver returns the deepest owning Deal', async () => {\n    const api = createMockPluginAPI('verstak.search', {\n      workspaces: [\n        { id: 'root', name: 'Project', rootPath: 'Project' },\n        { id: 'nested', name: 'Nested', rootPath: 'Project/Nested' },\n      ],\n    });\n\n    await expect(api.workspaces.resolvePath('Project/Nested/docs/readme.md')).resolves.toEqual({\n      found: true,\n      workspaceId: 'nested',\n      workspaceName: 'Nested',\n      workspaceRootPath: 'Project/Nested',\n      relativePath: 'docs/readme.md',\n    });\n    await expect(api.workspaces.resolvePath('Loose/file.txt')).resolves.toEqual({ found: false });\n  });\n\n"""
+          if text.count(marker) != 1:
+              raise SystemExit(f'plugin-api test insertion anchor count: {text.count(marker)}')
+          path.write_text(text.replace(marker, test + marker, 1))
           PY
       - name: Verify SDK
         run: |
@@ -50,7 +81,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/plugin-api.ts dist
+          git add src/plugin-api.ts src/test-utils.ts src/plugin-api.test.ts dist
           git diff --cached --check
           git commit -m 'feat: define workspace path resolution API'
           git push origin HEAD:audit/workspace-path-contract
