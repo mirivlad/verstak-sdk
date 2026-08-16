@@ -81,7 +81,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/plugin-api.ts src/test-utils.ts src/plugin-api.test.ts dist
+          git add src/plugin-api.ts src/test-utils.ts src/plugin-api.test.ts
           git diff --cached --check
           git commit -m 'feat: define workspace path resolution API'
           git push origin HEAD:audit/workspace-path-contract
