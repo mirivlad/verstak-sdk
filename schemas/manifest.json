@@ -297,6 +297,18 @@
           "items": {
             "$ref": "#/$defs/ContributionWorkspaceItem"
           }
+        },
+        "worklogProviders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContributionWorklogProvider"
+          }
+        },
+        "overviewProviders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContributionOverviewProvider"
+          }
         }
       }
     },
@@ -663,6 +675,46 @@
         "title",
         "component"
       ]
+    },
+    "ContributionWorklogProvider": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "handler": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "handler"
+      ],
+      "additionalProperties": false
+    },
+    "ContributionOverviewProvider": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "handler": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "handler"
+      ],
+      "additionalProperties": false
     }
   }
 }

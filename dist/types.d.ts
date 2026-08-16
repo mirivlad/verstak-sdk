@@ -39,9 +39,35 @@ export interface HealthCheckConfig {
 export interface MigrationConfig {
     path: string;
 }
+/**
+ * Which of the plugin's own data travels between devices.
+ *
+ * Everything a plugin stores lives under `.verstak`, which the vault scanner
+ * skips on purpose — it is not the user's documents. A set declared here is
+ * carried through the same operation log that carries files.
+ */
 export interface SyncConfig {
-    namespaces?: string[];
-    participate?: boolean;
+    records?: SyncRecordSet[];
+}
+/**
+ * One list of records the plugin shares. A record is the unit that travels, so
+ * two devices adding different items produce two records rather than two
+ * versions of one document, and neither has to be thrown away.
+ *
+ * A record changed on both devices is still resolved by server sequence: last
+ * write wins, the same rule the rest of sync follows.
+ */
+export interface SyncRecordSet {
+    /** Names the set in the operation log. Must stay stable across versions. */
+    id: string;
+    /** `settings`: an array under `key`. `data`: a named NDJSON file. */
+    storage: 'settings' | 'data';
+    /** Settings key holding the array. Required when storage is `settings`. */
+    key?: string;
+    /** NDJSON file name without extension. Required when storage is `data`. */
+    name?: string;
+    /** Field identifying a record. Records without one are not carried. */
+    identity: string;
 }
 /** A content-addressed binary payload. Blob bytes are uploaded before the
  * operation that references them and are never base64-embedded in the log. */
@@ -202,6 +228,13 @@ export interface WriteTextOptions {
     createIfMissing?: boolean;
     /** Replace an existing regular file. Existing folders/symlinks are rejected. */
     overwrite?: boolean;
+    /**
+     * The plugin is saving its own records, not producing something for the user.
+     * The write is still recorded as activity, marked as service, so no tool
+     * counts it as work. Set it when the file exists because the plugin needs
+     * somewhere to keep its data; leave it unset when the user made the content.
+     */
+    service?: boolean;
 }
 export interface MovePathOptions {
     /** Replace an existing target path when the host supports it. */
@@ -271,6 +304,8 @@ export interface ContributionPoints {
     contextMenuEntries?: ContributionContextMenuEntry[];
     searchProviders?: ContributionSearchProvider[];
     activityProviders?: ContributionActivityProvider[];
+    worklogProviders?: ContributionWorklogProvider[];
+    overviewProviders?: ContributionOverviewProvider[];
     statusBarItems?: ContributionStatusBarItem[];
     openProviders?: ContributionOpenProvider[];
     workspaceItems?: ContributionWorkspaceItem[];
@@ -326,6 +361,66 @@ export interface ContributionActivityProvider {
     events?: string[];
     handler: string;
 }
+/** A plugin that can propose Journal/worklog entries. */
+export interface ContributionWorklogProvider {
+    id: string;
+    label: string;
+    handler: string;
+}
+/** A plugin that contributes normalized signals to the Deal Overview. */
+export interface ContributionOverviewProvider {
+    id: string;
+    label: string;
+    handler: string;
+}
+/** Context passed to every Overview provider command. */
+export interface OverviewProviderRequest {
+    workspaceRootPath: string;
+}
+/**
+ * Navigation target for an Overview item. The shell resolves the exact
+ * workspace contribution id instead of guessing a tool from a plugin name.
+ */
+export interface OverviewActionTarget {
+    workspaceItemId: string;
+    toolRequest?: Record<string, unknown>;
+}
+export interface OverviewSummaryItem {
+    id: string;
+    label?: string;
+    count: number;
+    detail?: string;
+    /** Lower values are shown first. */
+    order?: number;
+    action?: OverviewActionTarget;
+}
+export interface OverviewSignalItem {
+    id: string;
+    title: string;
+    meta?: string;
+    occurredAt?: string;
+    /** Lower values are shown first when time is not the primary sort key. */
+    order?: number;
+    action?: OverviewActionTarget;
+}
+export interface OverviewRecentItem extends OverviewSignalItem {
+    /** Stable category id used for filtering. */
+    categoryId: string;
+    /** Optional localized label; the shell may fall back to the target tool title. */
+    categoryLabel?: string;
+}
+/**
+ * Data contract returned by an Overview provider. Providers own their storage
+ * and business semantics; the shell owns aggregation, sorting and rendering.
+ */
+export interface OverviewProviderResult {
+    summary?: OverviewSummaryItem[];
+    resume?: OverviewSignalItem[];
+    attention?: OverviewSignalItem[];
+    recent?: OverviewRecentItem[];
+    resources?: OverviewSignalItem[];
+    lastActiveAt?: string;
+}
 export interface ContributionStatusBarItem {
     id: string;
     label: string;
@@ -368,6 +463,8 @@ export interface RegisteredContributionPoints {
     contextMenuEntries?: RegisteredContribution<ContributionContextMenuEntry>[];
     searchProviders?: RegisteredContribution<ContributionSearchProvider>[];
     activityProviders?: RegisteredContribution<ContributionActivityProvider>[];
+    worklogProviders?: RegisteredContribution<ContributionWorklogProvider>[];
+    overviewProviders?: RegisteredContribution<ContributionOverviewProvider>[];
     statusBarItems?: RegisteredContribution<ContributionStatusBarItem>[];
     openProviders?: RegisteredContribution<ContributionOpenProvider>[];
     workspaceItems?: RegisteredContribution<ContributionWorkspaceItem>[];
