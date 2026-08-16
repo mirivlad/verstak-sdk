@@ -13,7 +13,7 @@ import type {
   TransferOutcome,
   TransferProgress,
 } from './types';
-import type { PluginCommandHandler, PluginLocale, TranslationParams, VerstakPluginAPI } from './plugin-api';
+import type { PluginCommandHandler, PluginLocale, PluginWorkspace, TranslationParams, VerstakPluginAPI } from './plugin-api';
 
 const mockCommandHandlers = new Map<string, PluginCommandHandler>();
 
@@ -26,6 +26,7 @@ export interface MockPluginAPIOptions {
   locale?: PluginLocale;
   defaultLocale?: PluginLocale;
   messages?: Partial<Record<PluginLocale, Record<string, string>>>;
+  workspaces?: PluginWorkspace[];
   importSources?: Array<{
     session: ImportSourceSession;
     entries: ImportSourceEntry[];
@@ -330,6 +331,25 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
         if (!point) return { ...(options.contributions || {}) };
         return ([...((options.contributions && options.contributions[point]) || [])]) as any;
       }) as VerstakPluginAPI['contributions']['list'],
+    },
+    workspaces: {
+      list: vi.fn(async () => [...(options.workspaces || [])]),
+      resolvePath: vi.fn(async (relativePath: string) => {
+        const path = normalizePath(relativePath);
+        const candidates = (options.workspaces || [])
+          .filter((workspace) => path === normalizePath(workspace.rootPath) || path.startsWith(`${normalizePath(workspace.rootPath)}/`))
+          .sort((a, b) => normalizePath(b.rootPath).length - normalizePath(a.rootPath).length);
+        const workspace = candidates[0];
+        if (!workspace) return { found: false };
+        const workspaceRootPath = normalizePath(workspace.rootPath);
+        return {
+          found: true,
+          workspaceId: workspace.id,
+          workspaceName: workspace.name,
+          workspaceRootPath,
+          relativePath: path === workspaceRootPath ? '' : path.slice(workspaceRootPath.length + 1),
+        };
+      }),
     },
     events: {
       publish: vi.fn(async (eventName: string, payload: Record<string, unknown> = {}) => {
