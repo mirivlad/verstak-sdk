@@ -26,6 +26,8 @@ describe('VerstakPluginAPI contract', () => {
     expect(typeof api.commands.execute).toBe('function');
     expect(typeof api.commands.executeFor).toBe('function');
     expect(typeof api.contributions.list).toBe('function');
+    expect(typeof api.workspaces.list).toBe('function');
+    expect(typeof api.workspaces.resolvePath).toBe('function');
     expect(typeof api.events.publish).toBe('function');
     expect(typeof api.events.subscribe).toBe('function');
     expect(typeof api.files.list).toBe('function');
@@ -50,6 +52,24 @@ describe('VerstakPluginAPI contract', () => {
     expect(typeof api.sync.now).toBe('function');
     expect(typeof api.browserReceiver.pairing).toBe('function');
     expect(typeof api.browserReceiver.rotateToken).toBe('function');
+  });
+
+  test('mock workspace resolver returns the deepest owning Deal', async () => {
+    const api = createMockPluginAPI('verstak.search', {
+      workspaces: [
+        { id: 'root', name: 'Project', rootPath: 'Project' },
+        { id: 'nested', name: 'Nested', rootPath: 'Project/Nested' },
+      ],
+    });
+
+    await expect(api.workspaces.resolvePath('Project/Nested/docs/readme.md')).resolves.toEqual({
+      found: true,
+      workspaceId: 'nested',
+      workspaceName: 'Nested',
+      workspaceRootPath: 'Project/Nested',
+      relativePath: 'docs/readme.md',
+    });
+    await expect(api.workspaces.resolvePath('Loose/file.txt')).resolves.toEqual({ found: false });
   });
 
   test('sync status exposes pairing scope and unresolved scanner warning', async () => {

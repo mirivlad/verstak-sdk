@@ -148,6 +148,20 @@ export interface BrowserReceiverPairing {
   receiverToken: string;
 }
 
+export interface PluginWorkspace {
+  id: string;
+  name: string;
+  rootPath: string;
+}
+
+export interface WorkspacePathResolution {
+  found: boolean;
+  workspaceId?: string;
+  workspaceName?: string;
+  workspaceRootPath?: string;
+  relativePath?: string;
+}
+
 export interface VerstakPluginAPI {
   readonly pluginId: string;
 
@@ -192,6 +206,16 @@ export interface VerstakPluginAPI {
     list<K extends keyof RegisteredContributionPoints>(
       point: K
     ): Promise<NonNullable<RegisteredContributionPoints[K]>>;
+  };
+
+  workspaces: {
+    /** Deal nodes where this plugin is active. */
+    list(): Promise<PluginWorkspace[]>;
+    /**
+     * Resolve a readable vault-relative path to its owning Deal.
+     * This does not imply that this plugin contributes a workspace item there.
+     */
+    resolvePath(relativePath: string): Promise<WorkspacePathResolution>;
   };
 
   events: {
