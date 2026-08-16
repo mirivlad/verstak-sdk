@@ -102,7 +102,7 @@
     },
     {
       "id": "search.providers",
-      "description": "Search result providers",
+      "description": "Normalized search providers. Queries may be vault-global or scoped to one Deal; providers own indexing and data semantics.",
       "type": "provider",
       "status": "draft"
     },
