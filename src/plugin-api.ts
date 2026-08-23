@@ -193,6 +193,12 @@ export interface VerstakPluginAPI {
     has(capability: string): Promise<boolean>;
     get(capability: string): Promise<{ available: boolean; name?: string; pluginId?: string; status?: string }>;
     list(): Promise<CapabilityEntry[]>;
+    /**
+     * Invoke a provider-independent operation on a declared required or optional capability.
+     * The host resolves the current provider and its command mapping; consumers never need
+     * to know the provider plugin id.
+     */
+    invoke(capability: string, operation: string, args?: PluginCommandArgs): Promise<PluginCommandResult>;
   };
 
   commands: {
