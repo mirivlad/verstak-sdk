@@ -22,6 +22,7 @@ export interface PluginManifest {
   provides: string[];
   requires?: string[];
   optionalRequires?: string[];
+  capabilityOperations?: CapabilityOperations;
   permissions: Permission[];
   frontend?: FrontendConfig;
   backend?: BackendConfig;
@@ -78,7 +79,7 @@ export interface SyncRecordSet {
   key?: string;
   /** NDJSON file name without extension. Required when storage is `data`. */
   name?: string;
-  /** Field identifying a record. Records without one are not carried. */
+  /** Field identifying a record. Records without it are not carried. */
   identity: string;
 }
 
@@ -141,6 +142,9 @@ export interface SyncServerError {
 // ─── Capabilities ────────────────────────────────────────────
 
 export type CapabilityName = string;
+
+/** Public provider-independent operations exposed by each provided capability. */
+export type CapabilityOperations = Record<CapabilityName, Record<string, string>>;
 
 export interface CapabilityEntry {
   name: CapabilityName;
