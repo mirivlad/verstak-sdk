@@ -1,6 +1,7 @@
 // Verstak Plugin SDK — Test Utilities
 
 import type {
+  CapabilityEntry,
   ImportPlan,
   ImportProgress,
   ImportSourceEntry,
@@ -21,7 +22,14 @@ function commandKey(pluginId: string, commandId: string): string {
   return `${pluginId}:${commandId}`;
 }
 
+export interface MockCapabilityProvider {
+  pluginId: string;
+  status?: CapabilityEntry['status'];
+  operations?: Record<string, string>;
+}
+
 export interface MockPluginAPIOptions {
+  capabilities?: Record<string, MockCapabilityProvider>;
   contributions?: RegisteredContributionPoints;
   locale?: PluginLocale;
   defaultLocale?: PluginLocale;
@@ -293,9 +301,31 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
       }),
     },
     capabilities: {
-      has: vi.fn(async () => false),
-      get: vi.fn(async (name: string) => ({ available: false, name })),
-      list: vi.fn(async () => []),
+      has: vi.fn(async (name: string) => !!options.capabilities?.[name]),
+      get: vi.fn(async (name: string) => {
+        const provider = options.capabilities?.[name];
+        if (!provider) return { available: false, name };
+        return { available: true, name, pluginId: provider.pluginId, status: provider.status || 'draft' };
+      }),
+      list: vi.fn(async () => Object.entries(options.capabilities || {}).map(([name, provider]) => ({
+        name,
+        pluginId: provider.pluginId,
+        status: provider.status || 'draft',
+      }))),
+      invoke: vi.fn(async (name: string, operation: string, args: Record<string, unknown> = {}) => {
+        const provider = options.capabilities?.[name];
+        if (!provider) throw new Error(`capability-unavailable: ${name}`);
+        const commandId = provider.operations?.[operation];
+        if (!commandId) throw new Error(`capability-operation-unavailable: ${name}:${operation}`);
+        const handler = mockCommandHandlers.get(commandKey(provider.pluginId, commandId));
+        if (!handler) throw new Error(`declared-but-unhandled: ${provider.pluginId}:${commandId}`);
+        return {
+          status: 'handled' as const,
+          pluginId: provider.pluginId,
+          commandId,
+          result: await handler(args, { status: 'declared', pluginId: provider.pluginId, commandId, args }),
+        };
+      }),
     },
     commands: {
       register: vi.fn(async (commandId: string, handler: PluginCommandHandler) => {

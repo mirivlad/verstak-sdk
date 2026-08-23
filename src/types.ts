@@ -22,6 +22,7 @@ export interface PluginManifest {
   provides: string[];
   requires?: string[];
   optionalRequires?: string[];
+  capabilityOperations?: CapabilityOperations;
   permissions: Permission[];
   frontend?: FrontendConfig;
   backend?: BackendConfig;
@@ -141,6 +142,9 @@ export interface SyncServerError {
 // ─── Capabilities ────────────────────────────────────────────
 
 export type CapabilityName = string;
+
+/** Public provider-independent operations exposed by each provided capability. */
+export type CapabilityOperations = Record<CapabilityName, Record<string, string>>;
 
 export interface CapabilityEntry {
   name: CapabilityName;
@@ -355,7 +359,7 @@ export interface TransferProgress {
 export interface RestoreTrashOptions {
   /** Restore to another vault-relative path instead of the original path. */
   targetPath?: string;
-  /** Replace an existing target path. Hosts reject conflicts by default. */
+  /** Replace an existing target path when the host supports it. */
   overwrite?: boolean;
 }
 

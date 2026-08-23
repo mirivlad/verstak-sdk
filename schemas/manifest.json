@@ -113,6 +113,10 @@
       },
       "default": []
     },
+    "capabilityOperations": {
+      "$ref": "./capability-operations.json",
+      "description": "Provider-independent operations exposed by capabilities declared in provides"
+    },
     "permissions": {
       "type": "array",
       "description": "Runtime permissions requested by the plugin",
