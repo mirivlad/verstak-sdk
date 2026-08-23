@@ -79,7 +79,7 @@ export interface SyncRecordSet {
   key?: string;
   /** NDJSON file name without extension. Required when storage is `data`. */
   name?: string;
-  /** Field identifying a record. Records without it are not carried. */
+  /** Field identifying a record. Records without one are not carried. */
   identity: string;
 }
 
@@ -359,7 +359,7 @@ export interface TransferProgress {
 export interface RestoreTrashOptions {
   /** Restore to another vault-relative path instead of the original path. */
   targetPath?: string;
-  /** Replace an existing target path. Hosts reject conflicts by default. */
+  /** Replace an existing target path when the host supports it. */
   overwrite?: boolean;
 }
 
