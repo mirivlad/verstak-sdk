@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/mirivlad/verstak-sdk/main/schemas/capability-operations.json",
+  "title": "Verstak Capability Operations",
+  "description": "Contract for public operations exposed by a plugin-provided capability. Operation names are provider-independent; values are declared plugin command ids implementing those operations.",
+  "type": "object",
+  "propertyNames": {
+    "type": "string",
+    "minLength": 1
+  },
+  "additionalProperties": {
+    "type": "object",
+    "minProperties": 1,
+    "propertyNames": {
+      "type": "string",
+      "minLength": 1
+    },
+    "additionalProperties": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "examples": [
+    {
+      "verstak/notes/v1": {
+        "list": "verstak.notes.list",
+        "get": "verstak.notes.get"
+      }
+    }
+  ]
+}
