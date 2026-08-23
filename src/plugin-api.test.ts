@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import capabilitiesSchema from '../schemas/capabilities.json';
+import capabilityOperationsSchema from '../schemas/capability-operations.json';
 import manifestSchema from '../schemas/manifest.json';
 import permissionsSchema from '../schemas/permissions.json';
 import syncSchema from '../schemas/sync.json';
@@ -22,6 +23,7 @@ describe('VerstakPluginAPI contract', () => {
     expect(typeof api.i18n.onDidChangeLocale).toBe('function');
     expect(typeof api.ui.openSettings).toBe('function');
     expect(typeof api.capabilities.list).toBe('function');
+    expect(typeof api.capabilities.invoke).toBe('function');
     expect(typeof api.commands.register).toBe('function');
     expect(typeof api.commands.execute).toBe('function');
     expect(typeof api.commands.executeFor).toBe('function');
@@ -52,6 +54,57 @@ describe('VerstakPluginAPI contract', () => {
     expect(typeof api.sync.now).toBe('function');
     expect(typeof api.browserReceiver.pairing).toBe('function');
     expect(typeof api.browserReceiver.rotateToken).toBe('function');
+  });
+
+  test('manifest declares provider-independent capability operation mappings', () => {
+    const manifestProperty = (manifestSchema as any).properties.capabilityOperations;
+    expect(manifestProperty.$ref).toBe('./capability-operations.json');
+    expect((capabilityOperationsSchema as any).type).toBe('object');
+    expect((capabilityOperationsSchema as any).additionalProperties.minProperties).toBe(1);
+
+    const manifest: PluginManifest = {
+      schemaVersion: 1,
+      id: 'notes.provider',
+      name: 'Notes Provider',
+      version: '1.0.0',
+      apiVersion: '0.1.0',
+      provides: ['verstak/notes/v1'],
+      capabilityOperations: {
+        'verstak/notes/v1': { list: 'notes.list', get: 'notes.get' },
+      },
+      permissions: ['commands.register'],
+    };
+
+    expect(manifest.capabilityOperations?.['verstak/notes/v1'].list).toBe('notes.list');
+  });
+
+  test('mock capability invocation resolves provider without exposing it to the consumer', async () => {
+    const provider = createMockPluginAPI('notes.provider');
+    await provider.commands.register('notes.list', async (args) => ({
+      workspaceRootPath: args.workspaceRootPath,
+      notes: ['README'],
+    }));
+
+    const consumer = createMockPluginAPI('projects.consumer', {
+      capabilities: {
+        'verstak/notes/v1': {
+          pluginId: 'notes.provider',
+          operations: { list: 'notes.list' },
+        },
+      },
+    });
+
+    await expect(consumer.capabilities.has('verstak/notes/v1')).resolves.toBe(true);
+    await expect(consumer.capabilities.invoke('verstak/notes/v1', 'list', { workspaceRootPath: 'Projects/TOS' }))
+      .resolves.toMatchObject({
+        status: 'handled',
+        pluginId: 'notes.provider',
+        commandId: 'notes.list',
+        result: { workspaceRootPath: 'Projects/TOS', notes: ['README'] },
+      });
+    await expect(consumer.capabilities.invoke('verstak/notes/v1', 'missing')).rejects.toThrow(
+      'capability-operation-unavailable: verstak/notes/v1:missing'
+    );
   });
 
   test('mock workspace resolver returns the deepest owning Deal', async () => {
