@@ -154,6 +154,27 @@ export interface PluginWorkspace {
   rootPath: string;
 }
 
+/**
+ * Read-only Deal tree entry exposed to plugins. Folder nodes organize the
+ * hierarchy; workspace nodes are Deals. `path` is a readable vault-relative
+ * path, while workspace `id` is the stable identity plugins should persist.
+ */
+export interface PluginWorkspaceTreeNode {
+  key?: string;
+  kind: 'folder' | 'workspace';
+  id: string;
+  name: string;
+  path: string;
+  children: PluginWorkspaceTreeNode[];
+}
+
+export interface PluginWorkspaceTreeSnapshot {
+  roots: PluginWorkspaceTreeNode[];
+  currentWorkspaceId: string;
+  revision: number;
+  warnings?: string[];
+}
+
 export interface WorkspacePathResolution {
   found: boolean;
   workspaceId?: string;
@@ -217,6 +238,13 @@ export interface VerstakPluginAPI {
   workspaces: {
     /** Deal nodes where this plugin is active. */
     list(): Promise<PluginWorkspace[]>;
+    /**
+     * Full user-visible Deal/folder hierarchy. Unlike `list`, this is not
+     * filtered by whether the calling plugin contributes a tool to a Deal.
+     * Optional for hosts older than the contract; new plugins should degrade
+     * safely when it is absent.
+     */
+    tree?(): Promise<PluginWorkspaceTreeSnapshot>;
     /**
      * Resolve a readable vault-relative path to its owning Deal.
      * This does not imply that this plugin contributes a workspace item there.
