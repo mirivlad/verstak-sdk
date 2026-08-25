@@ -1,10 +1,17 @@
-import type { ImportSourceEntry, ImportSourceSession, PluginManifest, PluginState, RegisteredContributionPoints } from './types';
-import type { PluginLocale, VerstakPluginAPI } from './plugin-api';
+import type { CapabilityEntry, ImportSourceEntry, ImportSourceSession, PluginManifest, PluginState, RegisteredContributionPoints } from './types';
+import type { PluginLocale, PluginWorkspace, VerstakPluginAPI } from './plugin-api';
+export interface MockCapabilityProvider {
+    pluginId: string;
+    status?: CapabilityEntry['status'];
+    operations?: Record<string, string>;
+}
 export interface MockPluginAPIOptions {
+    capabilities?: Record<string, MockCapabilityProvider>;
     contributions?: RegisteredContributionPoints;
     locale?: PluginLocale;
     defaultLocale?: PluginLocale;
     messages?: Partial<Record<PluginLocale, Record<string, string>>>;
+    workspaces?: PluginWorkspace[];
     importSources?: Array<{
         session: ImportSourceSession;
         entries: ImportSourceEntry[];
