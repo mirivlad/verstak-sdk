@@ -102,8 +102,64 @@ export interface BrowserReceiverPairing {
     receiverUrl: string;
     receiverToken: string;
 }
+export interface PluginWorkspace {
+    id: string;
+    name: string;
+    rootPath: string;
+}
+/**
+ * Read-only Deal tree entry exposed to plugins. Folder nodes organize the
+ * hierarchy; workspace nodes are Deals. `path` is a readable vault-relative
+ * path, while workspace `id` is the stable identity plugins should persist.
+ */
+export interface PluginWorkspaceTreeNode {
+    key?: string;
+    kind: 'folder' | 'workspace';
+    id: string;
+    name: string;
+    path: string;
+    children: PluginWorkspaceTreeNode[];
+}
+export interface PluginWorkspaceTreeSnapshot {
+    roots: PluginWorkspaceTreeNode[];
+    currentWorkspaceId: string;
+    revision: number;
+    warnings?: string[];
+}
+export interface WorkspacePathResolution {
+    found: boolean;
+    workspaceId?: string;
+    workspaceName?: string;
+    workspaceRootPath?: string;
+    relativePath?: string;
+}
+export interface WorkspaceNavigationRequest {
+    /** Stable Deal UUID. Prefer this over a readable path when available. */
+    workspaceId?: string;
+    /** Readable Deal root path used for immediate routing and legacy hosts. */
+    workspaceRootPath?: string;
+    /** Workspace contribution to open after selecting the Deal. */
+    workspaceItemId?: string;
+    /** Opaque request passed only to the opened workspace contribution. */
+    toolRequest?: Record<string, unknown>;
+}
+export interface PluginNavigationHandler {
+    canGoBack?: () => boolean;
+    goBack?: () => void;
+    canGoForward?: () => boolean;
+    goForward?: () => void;
+}
 export interface VerstakPluginAPI {
     readonly pluginId: string;
+    navigation: {
+        registerHandler(handler: PluginNavigationHandler): Unsubscribe;
+        /**
+         * Select a Deal and optionally open one of its workspace contributions.
+         * Core owns the navigation transition; plugins pass stable target IDs and
+         * may attach opaque tool state such as a selected project UUID.
+         */
+        openWorkspace(request: WorkspaceNavigationRequest): void;
+    };
     i18n: {
         getLocale(): PluginLocale;
         t(key: string, params?: TranslationParams, fallback?: string): string;
@@ -133,6 +189,12 @@ export interface VerstakPluginAPI {
             status?: string;
         }>;
         list(): Promise<CapabilityEntry[]>;
+        /**
+         * Invoke a provider-independent operation on a declared required or optional capability.
+         * The host resolves the current provider and its command mapping; consumers never need
+         * to know the provider plugin id.
+         */
+        invoke(capability: string, operation: string, args?: PluginCommandArgs): Promise<PluginCommandResult>;
     };
     commands: {
         register(commandId: string, handler: PluginCommandHandler): Promise<Unsubscribe>;
@@ -142,6 +204,22 @@ export interface VerstakPluginAPI {
     contributions: {
         list(): Promise<RegisteredContributionPoints>;
         list<K extends keyof RegisteredContributionPoints>(point: K): Promise<NonNullable<RegisteredContributionPoints[K]>>;
+    };
+    workspaces: {
+        /** Deal nodes where this plugin is active. */
+        list(): Promise<PluginWorkspace[]>;
+        /**
+         * Full user-visible Deal/folder hierarchy. Unlike `list`, this is not
+         * filtered by whether the calling plugin contributes a tool to a Deal.
+         * Optional for hosts older than the contract; new plugins should degrade
+         * safely when it is absent.
+         */
+        tree?(): Promise<PluginWorkspaceTreeSnapshot>;
+        /**
+         * Resolve a readable vault-relative path to its owning Deal.
+         * This does not imply that this plugin contributes a workspace item there.
+         */
+        resolvePath(relativePath: string): Promise<WorkspacePathResolution>;
     };
     events: {
         publish(eventName: string, payload?: Record<string, unknown>): Promise<void>;

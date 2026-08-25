@@ -218,6 +218,10 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
     }
     return {
         pluginId,
+        navigation: {
+            registerHandler: vi.fn((_handler) => () => { }),
+            openWorkspace: vi.fn((_request) => { }),
+        },
         i18n: {
             getLocale: vi.fn(() => locale),
             t: vi.fn((key, params, fallback) => {
@@ -260,9 +264,35 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
             }),
         },
         capabilities: {
-            has: vi.fn(async () => false),
-            get: vi.fn(async (name) => ({ available: false, name })),
-            list: vi.fn(async () => []),
+            has: vi.fn(async (name) => !!options.capabilities?.[name]),
+            get: vi.fn(async (name) => {
+                const provider = options.capabilities?.[name];
+                if (!provider)
+                    return { available: false, name };
+                return { available: true, name, pluginId: provider.pluginId, status: provider.status || 'draft' };
+            }),
+            list: vi.fn(async () => Object.entries(options.capabilities || {}).map(([name, provider]) => ({
+                name,
+                pluginId: provider.pluginId,
+                status: provider.status || 'draft',
+            }))),
+            invoke: vi.fn(async (name, operation, args = {}) => {
+                const provider = options.capabilities?.[name];
+                if (!provider)
+                    throw new Error(`capability-unavailable: ${name}`);
+                const commandId = provider.operations?.[operation];
+                if (!commandId)
+                    throw new Error(`capability-operation-unavailable: ${name}:${operation}`);
+                const handler = mockCommandHandlers.get(commandKey(provider.pluginId, commandId));
+                if (!handler)
+                    throw new Error(`declared-but-unhandled: ${provider.pluginId}:${commandId}`);
+                return {
+                    status: 'handled',
+                    pluginId: provider.pluginId,
+                    commandId,
+                    result: await handler(args, { status: 'declared', pluginId: provider.pluginId, commandId, args }),
+                };
+            }),
         },
         commands: {
             register: vi.fn(async (commandId, handler) => {
@@ -298,6 +328,26 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
                 if (!point)
                     return { ...(options.contributions || {}) };
                 return ([...((options.contributions && options.contributions[point]) || [])]);
+            }),
+        },
+        workspaces: {
+            list: vi.fn(async () => [...(options.workspaces || [])]),
+            resolvePath: vi.fn(async (relativePath) => {
+                const path = normalizePath(relativePath);
+                const candidates = (options.workspaces || [])
+                    .filter((workspace) => path === normalizePath(workspace.rootPath) || path.startsWith(`${normalizePath(workspace.rootPath)}/`))
+                    .sort((a, b) => normalizePath(b.rootPath).length - normalizePath(a.rootPath).length);
+                const workspace = candidates[0];
+                if (!workspace)
+                    return { found: false };
+                const workspaceRootPath = normalizePath(workspace.rootPath);
+                return {
+                    found: true,
+                    workspaceId: workspace.id,
+                    workspaceName: workspace.name,
+                    workspaceRootPath,
+                    relativePath: path === workspaceRootPath ? '' : path.slice(workspaceRootPath.length + 1),
+                };
             }),
         },
         events: {
