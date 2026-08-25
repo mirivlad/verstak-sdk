@@ -259,6 +259,10 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
 
   return {
     pluginId,
+    navigation: {
+      registerHandler: vi.fn((_handler) => () => {}),
+      openWorkspace: vi.fn((_request) => {}),
+    },
     i18n: {
       getLocale: vi.fn(() => locale),
       t: vi.fn((key: string, params?: TranslationParams, fallback?: string) => {
