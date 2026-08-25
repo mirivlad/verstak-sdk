@@ -1,0 +1,57 @@
+diff --git a/src/plugin-api.ts b/src/plugin-api.ts
+index fa039cd..e6c14c5 100644
+--- a/src/plugin-api.ts
++++ b/src/plugin-api.ts
+@@ -183,9 +183,37 @@ export interface WorkspacePathResolution {
+   relativePath?: string;
+ }
+ 
++export interface WorkspaceNavigationRequest {
++  /** Stable Deal UUID. Prefer this over a readable path when available. */
++  workspaceId?: string;
++  /** Readable Deal root path used for immediate routing and legacy hosts. */
++  workspaceRootPath?: string;
++  /** Workspace contribution to open after selecting the Deal. */
++  workspaceItemId?: string;
++  /** Opaque request passed only to the opened workspace contribution. */
++  toolRequest?: Record<string, unknown>;
++}
++
++export interface PluginNavigationHandler {
++  canGoBack?: () => boolean;
++  goBack?: () => void;
++  canGoForward?: () => boolean;
++  goForward?: () => void;
++}
++
+ export interface VerstakPluginAPI {
+   readonly pluginId: string;
+ 
++  navigation: {
++    registerHandler(handler: PluginNavigationHandler): Unsubscribe;
++    /**
++     * Select a Deal and optionally open one of its workspace contributions.
++     * Core owns the navigation transition; plugins pass stable target IDs and
++     * may attach opaque tool state such as a selected project UUID.
++     */
++    openWorkspace(request: WorkspaceNavigationRequest): void;
++  };
++
+   i18n: {
+     getLocale(): PluginLocale;
+     t(key: string, params?: TranslationParams, fallback?: string): string;
+diff --git a/src/test-utils.ts b/src/test-utils.ts
+index ab48c5e..d632669 100644
+--- a/src/test-utils.ts
++++ b/src/test-utils.ts
+@@ -259,6 +259,10 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
+ 
+   return {
+     pluginId,
++    navigation: {
++      registerHandler: vi.fn((_handler) => () => {}),
++      openWorkspace: vi.fn((_request) => {}),
++    },
+     i18n: {
+       getLocale: vi.fn(() => locale),
+       t: vi.fn((key: string, params?: TranslationParams, fallback?: string) => {
