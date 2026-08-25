@@ -183,8 +183,36 @@ export interface WorkspacePathResolution {
   relativePath?: string;
 }
 
+export interface WorkspaceNavigationRequest {
+  /** Stable Deal UUID. Prefer this over a readable path when available. */
+  workspaceId?: string;
+  /** Readable Deal root path used for immediate routing and legacy hosts. */
+  workspaceRootPath?: string;
+  /** Workspace contribution to open after selecting the Deal. */
+  workspaceItemId?: string;
+  /** Opaque request passed only to the opened workspace contribution. */
+  toolRequest?: Record<string, unknown>;
+}
+
+export interface PluginNavigationHandler {
+  canGoBack?: () => boolean;
+  goBack?: () => void;
+  canGoForward?: () => boolean;
+  goForward?: () => void;
+}
+
 export interface VerstakPluginAPI {
   readonly pluginId: string;
+
+  navigation: {
+    registerHandler(handler: PluginNavigationHandler): Unsubscribe;
+    /**
+     * Select a Deal and optionally open one of its workspace contributions.
+     * Core owns the navigation transition; plugins pass stable target IDs and
+     * may attach opaque tool state such as a selected project UUID.
+     */
+    openWorkspace(request: WorkspaceNavigationRequest): void;
+  };
 
   i18n: {
     getLocale(): PluginLocale;
