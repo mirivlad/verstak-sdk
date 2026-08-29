@@ -1,12 +1,13 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, expectTypeOf, test } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import capabilitiesSchema from '../schemas/capabilities.json';
 import capabilityOperationsSchema from '../schemas/capability-operations.json';
+import dealScopeSchema from '../schemas/deal-scope.json';
 import manifestSchema from '../schemas/manifest.json';
 import permissionsSchema from '../schemas/permissions.json';
 import syncSchema from '../schemas/sync.json';
 import vaultEventsSchema from '../schemas/events/vault.json';
-import type { OpenProviderSupport, OpenResourceRequest, PluginManifest } from './types';
+import type { DealOperationRequest, DealScope, OpenProviderSupport, OpenResourceRequest, PluginManifest } from './types';
 import { createMockPluginAPI } from './test-utils';
 
 describe('VerstakPluginAPI contract', () => {
@@ -54,6 +55,52 @@ describe('VerstakPluginAPI contract', () => {
     expect(typeof api.sync.now).toBe('function');
     expect(typeof api.browserReceiver.pairing).toBe('function');
     expect(typeof api.browserReceiver.rotateToken).toBe('function');
+  });
+
+  test('Deal-only contract requires a UUID scope for v2 navigation and provider calls', async () => {
+    expectTypeOf<DealScope>().toEqualTypeOf<{ kind: 'deal'; workspaceId: string }>();
+    expectTypeOf<DealOperationRequest>().toMatchTypeOf<{ scope: DealScope }>();
+    const api = createMockPluginAPI('verstak.platform-test');
+    await expect(Promise.resolve().then(() => api.navigation.openWorkspace({ workspaceId: '' }))).rejects.toThrow('workspaceId');
+    await expect(api.navigation.openWorkspace({
+      workspaceId: '11111111-1111-4111-8111-111111111111',
+      workspaceRootPath: 'Readable-but-not-an-identity',
+    })).resolves.toBeUndefined();
+  });
+
+  test('mock validates the DealScope envelope before v2 provider dispatch', async () => {
+    const provider = createMockPluginAPI('notes.provider');
+    await provider.commands.register('notes.list', async (args) => args);
+    const consumer = createMockPluginAPI('projects.consumer', {
+      capabilities: {
+        'verstak/notes/v2': {
+          pluginId: 'notes.provider',
+          operations: { list: 'notes.list' },
+        },
+      },
+    });
+
+    await expect(consumer.capabilities.invoke('verstak/notes/v2', 'list', {
+      scope: { kind: 'deal', workspaceId: 'not-a-uuid' },
+    })).rejects.toThrow('DealScope.workspaceId');
+    await expect(consumer.capabilities.invoke('verstak/notes/v2', 'list', {
+      scope: { kind: 'deal', workspaceId: '11111111-1111-4111-8111-111111111111' },
+    })).resolves.toMatchObject({
+      result: { scope: { kind: 'deal', workspaceId: '11111111-1111-4111-8111-111111111111' } },
+    });
+  });
+
+  test('schemas make v2 providers explicit and their public operations bounded', () => {
+    const capabilities = ((capabilitiesSchema as any).capabilities || []) as Array<{ name: string; status: string }>;
+    const v2Rules = (capabilityOperationsSchema as any).allOf || [];
+
+    expect((dealScopeSchema as any).required).toEqual(['kind', 'workspaceId']);
+    expect((dealScopeSchema as any).properties.kind.const).toBe('deal');
+    expect((dealScopeSchema as any).properties.workspaceId.format).toBe('uuid');
+    expect(v2Rules).toHaveLength(4);
+    for (const name of ['verstak/notes/v2', 'verstak/files/v2', 'verstak/todo/v2', 'verstak/activity/v2']) {
+      expect(capabilities).toContainEqual(expect.objectContaining({ name, status: 'draft' }));
+    }
   });
 
   test('manifest declares provider-independent capability operation mappings', () => {

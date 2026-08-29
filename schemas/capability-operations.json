@@ -20,6 +20,50 @@
       "minLength": 1
     }
   },
+  "allOf": [
+    {
+      "if": { "required": ["verstak/notes/v2"] },
+      "then": { "properties": { "verstak/notes/v2": { "$ref": "#/$defs/NotesV2Operations" } } }
+    },
+    {
+      "if": { "required": ["verstak/files/v2"] },
+      "then": { "properties": { "verstak/files/v2": { "$ref": "#/$defs/FilesV2Operations" } } }
+    },
+    {
+      "if": { "required": ["verstak/todo/v2"] },
+      "then": { "properties": { "verstak/todo/v2": { "$ref": "#/$defs/TodoV2Operations" } } }
+    },
+    {
+      "if": { "required": ["verstak/activity/v2"] },
+      "then": { "properties": { "verstak/activity/v2": { "$ref": "#/$defs/ActivityV2Operations" } } }
+    }
+  ],
+  "$defs": {
+    "NotesV2Operations": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": { "list": { "type": "string", "minLength": 1 }, "create": { "type": "string", "minLength": 1 }, "open": { "type": "string", "minLength": 1 } }
+    },
+    "FilesV2Operations": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": { "list": { "type": "string", "minLength": 1 }, "create": { "type": "string", "minLength": 1 }, "open": { "type": "string", "minLength": 1 } }
+    },
+    "TodoV2Operations": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": { "list": { "type": "string", "minLength": 1 }, "create": { "type": "string", "minLength": 1 }, "setStatus": { "type": "string", "minLength": 1 } }
+    },
+    "ActivityV2Operations": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": { "list": { "type": "string", "minLength": 1 }, "search": { "type": "string", "minLength": 1 } }
+    }
+  },
   "examples": [
     {
       "verstak/notes/v1": {

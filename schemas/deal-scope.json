@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/mirivlad/verstak-sdk/main/schemas/deal-scope.json",
+  "title": "Verstak Deal Scope",
+  "description": "The UUID-only scope for a Deal and all Deal-owned resources.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "workspaceId"],
+  "properties": {
+    "kind": { "const": "deal" },
+    "workspaceId": { "type": "string", "format": "uuid" }
+  }
+}
