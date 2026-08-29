@@ -7,6 +7,9 @@
 
 import type {
   CapabilityEntry,
+  DealOperationRequest,
+  DealScope,
+  DealScopedProviderCapability,
   FileBytes,
   FileEntry,
   FileMetadata,
@@ -184,10 +187,8 @@ export interface WorkspacePathResolution {
 }
 
 export interface WorkspaceNavigationRequest {
-  /** Stable Deal UUID. Prefer this over a readable path when available. */
-  workspaceId?: string;
-  /** Readable Deal root path used for immediate routing and legacy hosts. */
-  workspaceRootPath?: string;
+  /** Stable Deal UUID. This is the only identity accepted for navigation. */
+  workspaceId: DealScope['workspaceId'];
   /** Workspace contribution to open after selecting the Deal. */
   workspaceItemId?: string;
   /** Opaque request passed only to the opened workspace contribution. */
@@ -211,7 +212,7 @@ export interface VerstakPluginAPI {
      * Core owns the navigation transition; plugins pass stable target IDs and
      * may attach opaque tool state such as a selected project UUID.
      */
-    openWorkspace(request: WorkspaceNavigationRequest): void;
+    openWorkspace(request: WorkspaceNavigationRequest): Promise<void>;
   };
 
   i18n: {
@@ -247,6 +248,7 @@ export interface VerstakPluginAPI {
      * The host resolves the current provider and its command mapping; consumers never need
      * to know the provider plugin id.
      */
+    invoke(capability: DealScopedProviderCapability, operation: string, args: DealOperationRequest): Promise<PluginCommandResult>;
     invoke(capability: string, operation: string, args?: PluginCommandArgs): Promise<PluginCommandResult>;
   };
 

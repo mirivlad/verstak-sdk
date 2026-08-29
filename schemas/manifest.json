@@ -37,7 +37,7 @@
     },
     "apiVersion": {
       "type": "string",
-      "description": "Verstak Platform API version this plugin targets",
+      "description": "Verstak Platform API version this plugin targets; Deal-scoped v2 providers require a host that validates their UUID DealScope envelope.",
       "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.]+)?$"
     },
     "description": {

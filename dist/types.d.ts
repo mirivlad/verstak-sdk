@@ -118,6 +118,26 @@ export interface SyncServerError {
     code: string;
 }
 export type CapabilityName = string;
+/**
+ * The only runtime scope for resources belonging to a Deal. The UUID is
+ * stable across renames and moves; readable paths are deliberately absent.
+ */
+export interface DealScope {
+    kind: 'deal';
+    workspaceId: string;
+}
+/** A lightweight Deal identity for lists and cross-plugin references. */
+export interface DealRef {
+    workspaceId: string;
+    name?: string;
+}
+/** Required envelope for every v2 provider operation. */
+export interface DealOperationRequest {
+    scope: DealScope;
+    [key: string]: unknown;
+}
+/** Official provider contracts that use DealScope rather than a path or Project. */
+export type DealScopedProviderCapability = 'verstak/notes/v2' | 'verstak/files/v2' | 'verstak/todo/v2' | 'verstak/activity/v2';
 /** Public provider-independent operations exposed by each provided capability. */
 export type CapabilityOperations = Record<CapabilityName, Record<string, string>>;
 export interface CapabilityEntry {

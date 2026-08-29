@@ -2,6 +2,9 @@
 
 import type {
   CapabilityEntry,
+  DealOperationRequest,
+  DealScope,
+  DealScopedProviderCapability,
   ImportPlan,
   ImportProgress,
   ImportSourceEntry,
@@ -17,6 +20,25 @@ import type {
 import type { PluginCommandHandler, PluginLocale, PluginWorkspace, TranslationParams, VerstakPluginAPI } from './plugin-api';
 
 const mockCommandHandlers = new Map<string, PluginCommandHandler>();
+
+const dealScopedOperations: Record<DealScopedProviderCapability, readonly string[]> = {
+  'verstak/notes/v2': ['list', 'create', 'open'],
+  'verstak/files/v2': ['list', 'create', 'open'],
+  'verstak/todo/v2': ['list', 'create', 'setStatus'],
+  'verstak/activity/v2': ['list', 'search'],
+};
+
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isDealScopedProviderCapability(capability: string): capability is DealScopedProviderCapability {
+  return Object.prototype.hasOwnProperty.call(dealScopedOperations, capability);
+}
+
+function assertDealOperationRequest(args: Record<string, unknown>): asserts args is DealOperationRequest {
+  const scope = args.scope as Partial<DealScope> | undefined;
+  if (scope?.kind !== 'deal') throw new Error('DealScope.kind must be deal');
+  if (!uuidPattern.test(String(scope.workspaceId || ''))) throw new Error('DealScope.workspaceId must be a UUID');
+}
 
 function commandKey(pluginId: string, commandId: string): string {
   return `${pluginId}:${commandId}`;
@@ -261,7 +283,11 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
     pluginId,
     navigation: {
       registerHandler: vi.fn((_handler) => () => {}),
-      openWorkspace: vi.fn((_request) => {}),
+      openWorkspace: vi.fn(async (request) => {
+        if (!uuidPattern.test(String(request?.workspaceId || ''))) {
+          throw new Error('navigation.openWorkspace requires workspaceId UUID');
+        }
+      }),
     },
     i18n: {
       getLocale: vi.fn(() => locale),
@@ -317,6 +343,12 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
         status: provider.status || 'draft',
       }))),
       invoke: vi.fn(async (name: string, operation: string, args: Record<string, unknown> = {}) => {
+        if (isDealScopedProviderCapability(name)) {
+          if (!dealScopedOperations[name].includes(operation)) {
+            throw new Error(`capability-operation-unavailable: ${name}:${operation}`);
+          }
+          assertDealOperationRequest(args);
+        }
         const provider = options.capabilities?.[name];
         if (!provider) throw new Error(`capability-unavailable: ${name}`);
         const commandId = provider.operations?.[operation];
