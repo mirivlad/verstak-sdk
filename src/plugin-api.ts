@@ -268,6 +268,10 @@ export interface VerstakPluginAPI {
   workspaces: {
     /** Deal nodes where this plugin is active. */
     list(): Promise<PluginWorkspace[]>;
+    /** Read only this plugin's namespaced metadata from a canonical Deal record. */
+    readToolConfig(workspaceId: string): Promise<Record<string, unknown>>;
+    /** Atomically replace only this plugin's metadata namespace in a Deal record. */
+    writeToolConfig(workspaceId: string, config: Record<string, unknown>): Promise<void>;
     /**
      * Full user-visible Deal/folder hierarchy. Unlike `list`, this is not
      * filtered by whether the calling plugin contributes a tool to a Deal.

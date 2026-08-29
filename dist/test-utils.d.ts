@@ -12,6 +12,7 @@ export interface MockPluginAPIOptions {
     defaultLocale?: PluginLocale;
     messages?: Partial<Record<PluginLocale, Record<string, string>>>;
     workspaces?: PluginWorkspace[];
+    toolConfigs?: Record<string, Record<string, unknown>>;
     importSources?: Array<{
         session: ImportSourceSession;
         entries: ImportSourceEntry[];

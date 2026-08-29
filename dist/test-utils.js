@@ -65,6 +65,7 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
     const defaultLocale = options.defaultLocale || 'en';
     const messages = options.messages || {};
     const settings = {};
+    const toolConfigs = new Map(Object.entries(options.toolConfigs || {}).map(([workspaceId, config]) => [workspaceId, { ...config }]));
     const pluginData = new Map();
     const commands = new Map();
     const eventHandlers = new Map();
@@ -359,6 +360,10 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
         },
         workspaces: {
             list: vi.fn(async () => [...(options.workspaces || [])]),
+            readToolConfig: vi.fn(async (workspaceId) => ({ ...(toolConfigs.get(workspaceId) || {}) })),
+            writeToolConfig: vi.fn(async (workspaceId, config) => {
+                toolConfigs.set(workspaceId, { ...(config || {}) });
+            }),
             resolvePath: vi.fn(async (relativePath) => {
                 const path = normalizePath(relativePath);
                 const candidates = (options.workspaces || [])

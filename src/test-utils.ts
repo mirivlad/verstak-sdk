@@ -57,6 +57,7 @@ export interface MockPluginAPIOptions {
   defaultLocale?: PluginLocale;
   messages?: Partial<Record<PluginLocale, Record<string, string>>>;
   workspaces?: PluginWorkspace[];
+  toolConfigs?: Record<string, Record<string, unknown>>;
   importSources?: Array<{
     session: ImportSourceSession;
     entries: ImportSourceEntry[];
@@ -113,6 +114,7 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
   const defaultLocale = options.defaultLocale || 'en';
   const messages = options.messages || {};
   const settings: Record<string, unknown> = {};
+  const toolConfigs = new Map(Object.entries(options.toolConfigs || {}).map(([workspaceId, config]) => [workspaceId, { ...config }]));
   const pluginData = new Map<string, Record<string, unknown>>();
   const commands = new Map<string, PluginCommandHandler>();
   const eventHandlers = new Map<string, Array<(event: any) => void>>();
@@ -400,6 +402,10 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
     },
     workspaces: {
       list: vi.fn(async () => [...(options.workspaces || [])]),
+      readToolConfig: vi.fn(async (workspaceId: string) => ({ ...(toolConfigs.get(workspaceId) || {}) })),
+      writeToolConfig: vi.fn(async (workspaceId: string, config: Record<string, unknown>) => {
+        toolConfigs.set(workspaceId, { ...(config || {}) });
+      }),
       resolvePath: vi.fn(async (relativePath: string) => {
         const path = normalizePath(relativePath);
         const candidates = (options.workspaces || [])
