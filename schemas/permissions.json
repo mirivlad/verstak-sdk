@@ -36,6 +36,7 @@
     { "name": "files.openExternal", "description": "Open vault files and folders in external OS applications", "dangerous": true },
     { "name": "imports.readExternal", "description": "Select and read bounded entries from an external directory or supported archive", "dangerous": true },
     { "name": "imports.apply", "description": "Stage and publish a reviewed import plan inside the current vault", "dangerous": true },
+    { "name": "workspaces.create", "description": "Create a Deal from a complete recipe snapshot", "dangerous": true },
     { "name": "storage.namespace", "description": "Read/write plugin's own storage namespace", "dangerous": false },
     { "name": "storage.migrations", "description": "Run database migrations in plugin namespace", "dangerous": false },
     { "name": "events.publish", "description": "Publish events to the event bus", "dangerous": false },
