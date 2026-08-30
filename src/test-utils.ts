@@ -684,6 +684,15 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
       resetKey: vi.fn(async () => {}),
       now: vi.fn(async () => ({ pushed: 0, pulled: 0, serverSequence: 0 })),
     },
+    git: {
+      clone: vi.fn(async () => ({ checkoutPath: 'Deal/Repositories/mock' })),
+      registerExisting: vi.fn(async () => ({ checkoutPath: 'Deal/Repositories/mock' })),
+      status: vi.fn(async () => ({ state: 'not-cloned' as const, clean: true, changedCount: 0, untrackedCount: 0, changedFiles: [], ahead: 0, behind: 0, recentCommits: [] })),
+      fetch: vi.fn(async () => {}),
+      pull: vi.fn(async () => {}),
+      push: vi.fn(async () => {}),
+      openDirectory: vi.fn(async () => {}),
+    },
     browserReceiver: {
       pairing: vi.fn(async () => ({
         receiverUrl: 'http://127.0.0.1:47731/api/browser-inbox/v1/captures',
