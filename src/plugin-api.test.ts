@@ -202,6 +202,9 @@ describe('VerstakPluginAPI contract', () => {
     expect(permissionEnum).toContain('files.delete');
     expect(permissionEnum).toContain('files.openExternal');
     expect(permissionEnum).toContain('workbench.open');
+    expect(permissionEnum).toContain('workspaces.create');
+    expect(((permissionsSchema as any).permissions || []).map((entry: { name: string }) => entry.name))
+      .toContain('workspaces.create');
   });
 
   test('manifest schema declares safe plugin localization catalogs', () => {

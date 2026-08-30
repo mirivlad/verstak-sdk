@@ -203,6 +203,7 @@ export type Permission =
   | 'imports.readExternal'
   | 'imports.apply'
   | 'workbench.open'
+  | 'workspaces.create'
   | 'storage.namespace'
   | 'storage.migrations'
   | 'events.publish'
