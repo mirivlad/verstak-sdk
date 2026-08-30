@@ -151,6 +151,53 @@ export interface DealOperationRequest {
     scope: DealScope;
     [key: string]: unknown;
 }
+/** A syncable repository descriptor. Authentication is always a Secret
+ * reference; neither the descriptor nor this SDK contract carries raw values. */
+export interface GitRepositoryDescriptor {
+    id: string;
+    workspaceId: DealScope['workspaceId'];
+    name: string;
+    remoteUrl: string;
+    defaultBranch: string;
+    checkoutName: string;
+    credentialRef?: string;
+    updatedAt: string;
+}
+/** Identifies one repository's device-local checkout inside a Deal. */
+export interface GitRepositoryRequest {
+    scope: DealScope;
+    repositoryId: string;
+    checkoutName: string;
+    /** Required for network operations so Core can select HTTPS vs SSH auth. */
+    remoteUrl?: string;
+    credentialRef?: string;
+}
+export interface GitCloneRequest extends GitRepositoryRequest {
+    remoteUrl: string;
+    branch?: string;
+}
+export interface GitRegisterExistingRequest extends GitRepositoryRequest {
+    /** External source selected by the user; Core copies it and does not retain it. */
+    sourcePath: string;
+}
+export interface GitRecentCommit {
+    id: string;
+    shortId: string;
+    subject: string;
+    author: string;
+    committed: string;
+}
+export interface GitRepositoryStatus {
+    state: 'cloned' | 'not-cloned';
+    branch?: string;
+    clean: boolean;
+    changedCount: number;
+    untrackedCount: number;
+    changedFiles: string[];
+    ahead: number;
+    behind: number;
+    recentCommits: GitRecentCommit[];
+}
 /** Official provider contracts that use DealScope rather than a path or Project. */
 export type DealScopedProviderCapability = 'verstak/notes/v2' | 'verstak/files/v2' | 'verstak/todo/v2' | 'verstak/activity/v2';
 /** Public provider-independent operations exposed by each provided capability. */
