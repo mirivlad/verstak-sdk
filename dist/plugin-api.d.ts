@@ -1,4 +1,4 @@
-import type { CapabilityEntry, DealRecipeSnapshot, DealRef, DealOperationRequest, DealScope, DealScopedProviderCapability, FileBytes, FileEntry, FileMetadata, ImportApplyResult, ImportEntryPage, ImportPlan, ImportProgress, ImportSourceSession, MovePathOptions, OpenResourceRequest, OpenResourceResult, PathTransfer, PluginSettings, RegisteredContributionPoints, RestoreTrashOptions, TransferOutcome, TransferProgress, TrashEntry, TrashResult, WriteTextOptions } from './types';
+import type { CapabilityEntry, DealRecipeSnapshot, DealRef, DealOperationRequest, DealScope, DealScopedProviderCapability, FileBytes, FileEntry, FileMetadata, GitCloneRequest, GitRegisterExistingRequest, GitRepositoryRequest, GitRepositoryStatus, ImportApplyResult, ImportEntryPage, ImportPlan, ImportProgress, ImportSourceSession, MovePathOptions, OpenResourceRequest, OpenResourceResult, PathTransfer, PluginSettings, RegisteredContributionPoints, RestoreTrashOptions, TransferOutcome, TransferProgress, TrashEntry, TrashResult, WriteTextOptions } from './types';
 export type PluginCommandArgs = Record<string, unknown>;
 export type PluginDataJSON = Record<string, unknown>;
 export type PluginLocale = 'ru' | 'en';
@@ -297,6 +297,21 @@ export interface VerstakPluginAPI {
         setInterval(minutes: number): Promise<void>;
         resetKey(): Promise<void>;
         now(): Promise<SyncNowResult>;
+    };
+    /** Focused Git integration. Checkout bytes are device-local; descriptors and
+     * credential references are ordinary plugin data that may sync. */
+    git: {
+        clone(request: GitCloneRequest): Promise<{
+            checkoutPath: string;
+        }>;
+        registerExisting(request: GitRegisterExistingRequest): Promise<{
+            checkoutPath: string;
+        }>;
+        status(request: GitRepositoryRequest): Promise<GitRepositoryStatus>;
+        fetch(request: Required<Pick<GitRepositoryRequest, 'remoteUrl'>> & GitRepositoryRequest): Promise<void>;
+        pull(request: Required<Pick<GitRepositoryRequest, 'remoteUrl'>> & GitRepositoryRequest): Promise<void>;
+        push(request: Required<Pick<GitRepositoryRequest, 'remoteUrl'>> & GitRepositoryRequest): Promise<void>;
+        openDirectory(request: GitRepositoryRequest): Promise<void>;
     };
     browserReceiver: {
         pairing(): Promise<BrowserReceiverPairing>;
