@@ -56,6 +56,14 @@ describe('VerstakPluginAPI contract', () => {
     expect(typeof api.sync.configure).toBe('function');
     expect(typeof api.sync.resetKey).toBe('function');
     expect(typeof api.sync.now).toBe('function');
+
+    expect(typeof api.git.clone).toBe('function');
+    expect(typeof api.git.registerExisting).toBe('function');
+    expect(typeof api.git.status).toBe('function');
+    expect(typeof api.git.fetch).toBe('function');
+    expect(typeof api.git.pull).toBe('function');
+    expect(typeof api.git.push).toBe('function');
+    expect(typeof api.git.openDirectory).toBe('function');
     expect(typeof api.browserReceiver.pairing).toBe('function');
     expect(typeof api.browserReceiver.rotateToken).toBe('function');
   });
