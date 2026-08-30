@@ -131,6 +131,21 @@ export interface DealRef {
     workspaceId: string;
     name?: string;
 }
+/** Immutable creation input supplied by a Templates provider to Core. */
+export interface DealRecipeSnapshot {
+    workspaceTools: string[];
+    initialFolders?: string[];
+    initialFiles?: Array<{
+        path: string;
+        content: string;
+    }>;
+    toolConfig?: Record<string, unknown>;
+    provenance: {
+        templateId: string;
+        templateName?: string;
+        templateVersion?: number;
+    };
+}
 /** Required envelope for every v2 provider operation. */
 export interface DealOperationRequest {
     scope: DealScope;

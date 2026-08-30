@@ -406,6 +406,7 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
       writeToolConfig: vi.fn(async (workspaceId: string, config: Record<string, unknown>) => {
         toolConfigs.set(workspaceId, { ...(config || {}) });
       }),
+      create: vi.fn(async (_parentFolderId: string, name: string) => ({ workspaceId: '11111111-1111-4111-8111-111111111111', name })),
       resolvePath: vi.fn(async (relativePath: string) => {
         const path = normalizePath(relativePath);
         const candidates = (options.workspaces || [])

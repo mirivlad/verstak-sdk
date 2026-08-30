@@ -32,6 +32,7 @@ describe('VerstakPluginAPI contract', () => {
     expect(typeof api.workspaces.list).toBe('function');
     expect(typeof api.workspaces.readToolConfig).toBe('function');
     expect(typeof api.workspaces.writeToolConfig).toBe('function');
+    expect(typeof api.workspaces.create).toBe('function');
     expect(typeof api.workspaces.resolvePath).toBe('function');
     expect(typeof api.events.publish).toBe('function');
     expect(typeof api.events.subscribe).toBe('function');

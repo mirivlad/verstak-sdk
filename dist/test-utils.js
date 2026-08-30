@@ -364,6 +364,7 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
             writeToolConfig: vi.fn(async (workspaceId, config) => {
                 toolConfigs.set(workspaceId, { ...(config || {}) });
             }),
+            create: vi.fn(async (_parentFolderId, name) => ({ workspaceId: '11111111-1111-4111-8111-111111111111', name })),
             resolvePath: vi.fn(async (relativePath) => {
                 const path = normalizePath(relativePath);
                 const candidates = (options.workspaces || [])
