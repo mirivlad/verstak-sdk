@@ -177,8 +177,8 @@ export interface GitCloneRequest extends GitRepositoryRequest {
     branch?: string;
 }
 export interface GitRegisterExistingRequest extends GitRepositoryRequest {
-    /** External source selected by the user; Core copies it and does not retain it. */
-    sourcePath: string;
+    /** Optional external source path. When omitted, Desktop opens a native directory picker after permission checks. Core copies it and does not retain it. */
+    sourcePath?: string;
 }
 export interface GitRecentCommit {
     id: string;
