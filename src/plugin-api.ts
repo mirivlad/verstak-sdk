@@ -7,6 +7,8 @@
 
 import type {
   CapabilityEntry,
+  DealRecipeSnapshot,
+  DealRef,
   DealOperationRequest,
   DealScope,
   DealScopedProviderCapability,
@@ -272,6 +274,8 @@ export interface VerstakPluginAPI {
     readToolConfig(workspaceId: string): Promise<Record<string, unknown>>;
     /** Atomically replace only this plugin's metadata namespace in a Deal record. */
     writeToolConfig(workspaceId: string, config: Record<string, unknown>): Promise<void>;
+    /** Create one Deal from a complete immutable recipe snapshot. */
+    create(parentFolderId: string, name: string, recipe: DealRecipeSnapshot): Promise<DealRef>;
     /**
      * Full user-visible Deal/folder hierarchy. Unlike `list`, this is not
      * filtered by whether the calling plugin contributes a tool to a Deal.
