@@ -733,4 +733,27 @@ describe('VerstakPluginAPI contract', () => {
 
     await expect(api.files.move('Folder', 'Folder/Child')).rejects.toThrow('move-into-self');
   });
+  test('mock keys, notifications, secrets and openURL follow the host contract', async () => {
+    const api = createMockPluginAPI('test.surface');
+
+    const ctrlS = { code: 'KeyS', ctrlKey: true, metaKey: false, shiftKey: false, altKey: false } as KeyboardEvent;
+    expect(api.keys.matches(ctrlS, { code: 'KeyS', ctrlOrMeta: true })).toBe(true);
+    expect(api.keys.matches(ctrlS, { code: 'KeyS', ctrlOrMeta: true, shift: true })).toBe(false);
+
+    await api.notifications.replace([{ id: 'n1', dueAt: '2026-10-01T09:00:00Z', title: 'Reminder' }]);
+    await api.notifications.clear();
+    await expect(api.notifications.replace('nope' as never)).rejects.toThrow('array');
+
+    await expect(api.secrets.list()).rejects.toThrow('locked');
+    await api.secrets.unlock('master');
+    const written = await api.secrets.write({ title: 'Server', value: 'hunter2', scope: { kind: 'global' } });
+    expect(written).not.toHaveProperty('value');
+    expect((await api.secrets.read(written.id)).value).toBe('hunter2');
+    expect(await api.secrets.copyLink(written.id)).toBe(`[Server](verstak-secret://${written.id})`);
+    await api.secrets.delete(written.id);
+    expect(await api.secrets.list()).toEqual([]);
+
+    await expect(api.files.openURL('https://example.com')).resolves.toBeUndefined();
+    await expect(api.files.openURL('file:///etc/passwd')).rejects.toThrow('HTTP(S)');
+  });
 });
