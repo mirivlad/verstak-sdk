@@ -1,6 +1,50 @@
 import type { CapabilityEntry, DealRecipeSnapshot, DealRef, DealOperationRequest, DealScope, DealScopedProviderCapability, FileBytes, FileEntry, FileMetadata, GitCloneRequest, GitRegisterExistingRequest, GitRepositoryRequest, GitRepositoryStatus, ImportApplyResult, ImportEntryPage, ImportPlan, ImportProgress, ImportSourceSession, MovePathOptions, OpenResourceRequest, OpenResourceResult, PathTransfer, PluginSettings, RegisteredContributionPoints, RestoreTrashOptions, TransferOutcome, TransferProgress, TrashEntry, TrashResult, WriteTextOptions } from './types';
 export type PluginCommandArgs = Record<string, unknown>;
 export type PluginDataJSON = Record<string, unknown>;
+/**
+ * A keyboard shortcut matched by physical key (`KeyboardEvent.code`), so it
+ * works the same in every layout. `ctrlOrMeta` accepts Ctrl on Linux/Windows
+ * and Cmd on macOS; any modifier not asked for must not be held.
+ */
+export interface ShortcutSpec {
+    code: string;
+    ctrl?: boolean;
+    meta?: boolean;
+    ctrlOrMeta?: boolean;
+    shift?: boolean;
+    alt?: boolean;
+}
+/** One native notification a plugin wants shown at `dueAt` (RFC 3339). */
+export interface PluginNotificationRequest {
+    id: string;
+    dueAt: string;
+    title: string;
+    body?: string;
+}
+export interface SecretsStatus {
+    initialized: boolean;
+    unlocked: boolean;
+}
+export interface SecretScope {
+    kind: 'global' | 'workspace';
+    workspaceRootPath?: string;
+}
+/** A secret as listed or written; `value` is present only from `read`. */
+export interface SecretRecord {
+    id: string;
+    title: string;
+    scope: SecretScope;
+    username?: string;
+    updatedAt: string;
+    value?: string;
+}
+export interface SecretWriteRequest {
+    id?: string;
+    title: string;
+    value: string;
+    scope: SecretScope;
+    username?: string;
+}
 export type PluginLocale = 'ru' | 'en';
 export type TranslationParams = Record<string, string | number>;
 export type PluginCommandHandler = (args: PluginCommandArgs, declaration: PluginCommandDeclaration) => unknown | Promise<unknown>;
@@ -178,6 +222,33 @@ export interface VerstakPluginAPI {
     ui: {
         openSettings(panelId?: string): Promise<void>;
     };
+    keys: {
+        /** True when the event is the given shortcut, matched by physical key. */
+        matches(event: KeyboardEvent, spec: ShortcutSpec): boolean;
+    };
+    /**
+     * Native notifications owned by this plugin. `replace` sets the complete
+     * schedule; requires permission `notifications.schedule` and capability
+     * `verstak/core/notifications/v1`.
+     */
+    notifications: {
+        replace(items: PluginNotificationRequest[]): Promise<void>;
+        clear(): Promise<void>;
+    };
+    /**
+     * The encrypted secret store. Values leave the store only through `read`;
+     * `list` and `write` return records without them.
+     */
+    secrets: {
+        status(): Promise<SecretsStatus>;
+        unlock(masterPassword: string): Promise<void>;
+        list(): Promise<SecretRecord[]>;
+        read(secretId: string): Promise<SecretRecord>;
+        write(record: SecretWriteRequest): Promise<SecretRecord>;
+        delete(secretId: string): Promise<void>;
+        /** Returns a Markdown link, `[title](verstak-secret://id)`, to paste into a note. */
+        copyLink(secretId: string): Promise<string>;
+    };
     capabilities: {
         has(capability: string): Promise<boolean>;
         get(capability: string): Promise<{
@@ -283,6 +354,8 @@ export interface VerstakPluginAPI {
         restoreTrash(trashId: string, options?: RestoreTrashOptions): Promise<string>;
         deleteTrash(trashId: string): Promise<void>;
         openExternal(relativePath: string): Promise<void>;
+        /** Open an http(s) URL in the system browser. */
+        openURL(url: string): Promise<void>;
         showInFolder(relativePath: string): Promise<void>;
     };
     workbench: {

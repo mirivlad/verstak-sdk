@@ -17,7 +17,17 @@ import type {
   TransferOutcome,
   TransferProgress,
 } from './types';
-import type { PluginCommandHandler, PluginLocale, PluginWorkspace, TranslationParams, VerstakPluginAPI } from './plugin-api';
+import type {
+  PluginCommandHandler,
+  PluginLocale,
+  PluginNotificationRequest,
+  PluginWorkspace,
+  SecretRecord,
+  SecretWriteRequest,
+  ShortcutSpec,
+  TranslationParams,
+  VerstakPluginAPI,
+} from './plugin-api';
 
 const mockCommandHandlers = new Map<string, PluginCommandHandler>();
 
@@ -125,6 +135,15 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
   const trashPayloads = new Map<string, Array<{ suffix: string; node: { type: 'file' | 'folder'; content?: string; modifiedAt: string } }>>();
   const cancelledTransfers = new Set<string>();
   const transferProgressListeners = new Set<(progress: TransferProgress) => void>();
+  const secretStore = new Map<string, SecretRecord & { value: string }>();
+  let secretsUnlocked = false;
+  const secretOrThrow = (secretId: string) => {
+    if (!secretsUnlocked) throw new Error('secret store is locked');
+    const record = secretStore.get(secretId);
+    if (!record) throw new Error(`secret not found: ${secretId}`);
+    return record;
+  };
+  const withoutValue = ({ value: _value, ...record }: SecretRecord & { value: string }): SecretRecord => record;
 
   const movePath = async (fromRelativePath: string, toRelativePath: string, options: MovePathOptions = {}) => {
     const from = normalizePath(fromRelativePath);
@@ -330,6 +349,52 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
           timestamp: new Date().toISOString(),
         };
         (eventHandlers.get('ui.openSettings') || []).slice().forEach((handler) => handler(event));
+      }),
+    },
+    keys: {
+      matches: vi.fn((event: KeyboardEvent, spec: ShortcutSpec) => {
+        if (!event || !spec || !spec.code || event.code !== spec.code) return false;
+        const ctrl = Boolean(event.ctrlKey);
+        const meta = Boolean(event.metaKey);
+        if (spec.ctrlOrMeta) {
+          if (!ctrl && !meta) return false;
+        } else if (Boolean(spec.ctrl) !== ctrl || Boolean(spec.meta) !== meta) {
+          return false;
+        }
+        return Boolean(spec.shift) === Boolean(event.shiftKey) && Boolean(spec.alt) === Boolean(event.altKey);
+      }),
+    },
+    notifications: {
+      replace: vi.fn(async (items: PluginNotificationRequest[]) => {
+        if (!Array.isArray(items)) throw new Error('notifications.replace requires an array');
+      }),
+      clear: vi.fn(async () => {}),
+    },
+    secrets: {
+      status: vi.fn(async () => ({ initialized: true, unlocked: secretsUnlocked })),
+      unlock: vi.fn(async (masterPassword: string) => {
+        if (!masterPassword) throw new Error('master password is required');
+        secretsUnlocked = true;
+      }),
+      list: vi.fn(async () => {
+        if (!secretsUnlocked) throw new Error('secret store is locked');
+        return Array.from(secretStore.values(), withoutValue);
+      }),
+      read: vi.fn(async (secretId: string) => ({ ...secretOrThrow(secretId) })),
+      write: vi.fn(async (record: SecretWriteRequest) => {
+        if (!secretsUnlocked) throw new Error('secret store is locked');
+        const id = record.id || `secret-${secretStore.size + 1}`;
+        const stored = { ...record, id, updatedAt: new Date().toISOString() };
+        secretStore.set(id, stored);
+        return withoutValue(stored);
+      }),
+      delete: vi.fn(async (secretId: string) => {
+        secretOrThrow(secretId);
+        secretStore.delete(secretId);
+      }),
+      copyLink: vi.fn(async (secretId: string) => {
+        const record = secretOrThrow(secretId);
+        return `[${record.title}](verstak-secret://${encodeURIComponent(record.id)})`;
       }),
     },
     capabilities: {
@@ -638,6 +703,10 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
       openExternal: vi.fn(async (relativePath: string) => {
         const path = normalizePath(relativePath);
         if (!files.has(path)) throw new Error(`not-found: ${path}`);
+      }),
+      openURL: vi.fn(async (url: string) => {
+        const parsed = new URL(String(url));
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new Error('invalid HTTP(S) URL');
       }),
       showInFolder: vi.fn(async (relativePath: string) => {
         const path = normalizePath(relativePath);
