@@ -752,6 +752,10 @@ describe('VerstakPluginAPI contract', () => {
     expect(await api.secrets.copyLink(written.id)).toBe(`[Server](verstak-secret://${written.id})`);
     await api.secrets.delete(written.id);
     expect(await api.secrets.list()).toEqual([]);
+    await expect(api.secrets.archiveAndReset(false)).rejects.toThrow('confirmation');
+    await expect(api.secrets.archiveAndReset(true)).resolves.toContain('secrets-archives');
+    expect(await api.secrets.status()).toEqual({ initialized: false, unlocked: false });
+    await expect(api.secrets.list()).rejects.toThrow('locked');
 
     await expect(api.files.openURL('https://example.com')).resolves.toBeUndefined();
     await expect(api.files.openURL('file:///etc/passwd')).rejects.toThrow('HTTP(S)');

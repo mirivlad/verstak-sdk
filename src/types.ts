@@ -730,6 +730,8 @@ export interface OpenResourceContext {
 }
 
 export interface OpenResourceRequest {
+  /** Opens above the current material without navigating away. */
+  presentation?: 'dialog';
   kind: OpenResourceKind;
   path: string;
   mode?: OpenResourceMode;
