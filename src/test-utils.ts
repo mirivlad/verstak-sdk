@@ -137,6 +137,7 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
   const transferProgressListeners = new Set<(progress: TransferProgress) => void>();
   const secretStore = new Map<string, SecretRecord & { value: string }>();
   let secretsUnlocked = false;
+  let secretsInitialized = true;
   const secretOrThrow = (secretId: string) => {
     if (!secretsUnlocked) throw new Error('secret store is locked');
     const record = secretStore.get(secretId);
@@ -371,10 +372,18 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
       clear: vi.fn(async () => {}),
     },
     secrets: {
-      status: vi.fn(async () => ({ initialized: true, unlocked: secretsUnlocked })),
+      archiveAndReset: vi.fn(async (confirmed: boolean) => {
+        if (!confirmed) throw new Error('secret archive confirmation required');
+        secretStore.clear();
+        secretsUnlocked = false;
+        secretsInitialized = false;
+        return '/mock/vault/.verstak/secrets-archives/test/secrets';
+      }),
+      status: vi.fn(async () => ({ initialized: secretsInitialized, unlocked: secretsUnlocked })),
       unlock: vi.fn(async (masterPassword: string) => {
         if (!masterPassword) throw new Error('master password is required');
         secretsUnlocked = true;
+        secretsInitialized = true;
       }),
       list: vi.fn(async () => {
         if (!secretsUnlocked) throw new Error('secret store is locked');

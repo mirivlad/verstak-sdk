@@ -315,6 +315,8 @@ export interface VerstakPluginAPI {
    * `list` and `write` return records without them.
    */
   secrets: {
+    /** Archives the encrypted store intact and locks the session. Requires explicit confirmation and secrets.write. */
+    archiveAndReset(confirmed: boolean): Promise<string>;
     status(): Promise<SecretsStatus>;
     unlock(masterPassword: string): Promise<void>;
     list(): Promise<SecretRecord[]>;
