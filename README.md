@@ -95,7 +95,7 @@ Verstak Desktop creates the real API with `createPluginAPI(pluginId)` and passes
 it to bundled plugin components at mount time. The SDK exports TypeScript types
 for that host-provided object:
 
-- `settings.read/write/writeAll`
+- `settings.read/write/writeAll`, optional `settings.upsertRecord`
 - `capabilities.list/get/has`
 - `commands.register/execute/executeFor`
 - `contributions.list`
@@ -103,6 +103,13 @@ for that host-provided object:
 - `files.list/metadata/readText/readBytes/writeText/createFolder/move/trash/listTrash/restoreTrash/deleteTrash`
 - `workbench.openResource/editResource`
 - optional `dispose`
+
+Desktop v0.3.4 adds `settings.upsertRecord(key, identityField, record, maxRecords)`.
+It atomically inserts or replaces the complete record by its nonempty string
+identity, moves it to the front and keeps at most 1–10000 records. Other settings
+keys are preserved; existing malformed arrays are rejected without overwriting
+them. Feature-detect the optional method on older hosts. Declared sync record
+sets keep the same change tracking as ordinary settings writes.
 
 Files paths are canonical vault-relative slash paths. Backslashes, Windows/UNC
 absolute paths, traversal, null bytes, `.verstak` variants, and symlink

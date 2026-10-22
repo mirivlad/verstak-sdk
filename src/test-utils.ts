@@ -328,6 +328,13 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
         settings[key] = value;
         return { ...settings };
       }),
+      upsertRecord: vi.fn(async (key: string, identityField: string, record: Record<string, unknown>, maxRecords: number) => {
+        if (!key.trim() || !identityField.trim() || typeof record?.[identityField] !== 'string' || !(record[identityField] as string).trim()) throw new Error('record identity and settings key are required');
+        if (!Number.isInteger(maxRecords) || maxRecords < 1 || maxRecords > 10000) throw new Error('maxRecords must be between 1 and 10000');
+        const existing = settings[key] ?? [];
+        if (!Array.isArray(existing) || existing.some(value => !value || typeof value !== 'object' || Array.isArray(value))) throw new Error('setting is not a record array');
+        settings[key] = [{ ...record }, ...existing.filter(value => value[identityField] !== record[identityField])].slice(0, maxRecords);
+      }),
       writeAll: vi.fn(async (nextSettings: Record<string, unknown>) => {
         Object.keys(settings).forEach((key) => delete settings[key]);
         Object.assign(settings, nextSettings);

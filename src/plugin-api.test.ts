@@ -519,6 +519,19 @@ describe('VerstakPluginAPI contract', () => {
     await expect(api.settings.read()).resolves.toEqual({ savedText: 'hello' });
   });
 
+  test('settings records replace by identity, retain other settings and bound the list', async () => {
+    const api = createMockPluginAPI('records.plugin');
+    await api.settings.write('theme', 'dark');
+    const upsert = api.settings.upsertRecord!;
+    await upsert('entries', 'id', { id: 'one', value: 'old' }, 2);
+    await upsert('entries', 'id', { id: 'two' }, 2);
+    await upsert('entries', 'id', { id: 'one', value: 'new' }, 2);
+    await upsert('entries', 'id', { id: 'three' }, 2);
+    await expect(api.settings.read()).resolves.toEqual({ theme: 'dark', entries: [{ id: 'three' }, { id: 'one', value: 'new' }] });
+    await expect(upsert('entries', 'id', { id: '' }, 2)).rejects.toThrow('identity');
+    await expect(upsert('entries', 'id', { id: 'four' }, 0)).rejects.toThrow('maxRecords');
+  });
+
   test('plugin data persists separately from settings in the mock API namespace', async () => {
     const api = createMockPluginAPI('storage.plugin');
 
