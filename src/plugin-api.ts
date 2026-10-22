@@ -281,6 +281,9 @@ export interface VerstakPluginAPI {
     read(): Promise<PluginSettings>;
     read<T = unknown>(key: string): Promise<T | undefined>;
     write(key: string, value: unknown): Promise<PluginSettings>;
+    /** Host v0.3.4+: atomically insert/replace by string identity, newest first.
+     * Keeps at most maxRecords (1–10000). Feature-detect on older hosts. */
+    upsertRecord?(key: string, identityField: string, record: Record<string, unknown>, maxRecords: number): Promise<void>;
     writeAll(settings: PluginSettings): Promise<void>;
   };
 
