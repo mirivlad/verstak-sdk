@@ -191,8 +191,48 @@ export interface PluginNavigationHandler {
     canGoForward?: () => boolean;
     goForward?: () => void;
 }
+/** Generic host process infrastructure. Available only with processes/v1.
+ * No shell parsing, expansion or implicit interpreter. Defaults: 30s, 1 MiB
+ * combined output; maximum 10min and 4 MiB. cwd defaults to the user's home.
+ * Review is a native host dialog, never an approval stored in synced data.
+ */
+export type ProcessRequest = {
+    kind: 'process';
+    executable: string;
+    args: string[];
+    cwd?: string;
+    mode: 'wait' | 'detached';
+    timeoutMs?: number;
+    maxOutputBytes?: number;
+} | {
+    kind: 'url';
+    url: string;
+};
+export interface ProcessResult {
+    started: boolean;
+    /** -1 for detached launches and URL handlers. */
+    exitCode: number;
+    stdout: string;
+    stderr: string;
+    timedOut: boolean;
+    cancelled: boolean;
+    outputLimited: boolean;
+}
+export interface PluginProcesses {
+    approved(request: ProcessRequest): Promise<boolean>;
+    /** Shows the exact normalized request. No is the default button. */
+    review(request: ProcessRequest): Promise<boolean>;
+    revoke(request: ProcessRequest): Promise<void>;
+    /** Rejects approval_required; it NEVER opens a review dialog itself.
+     * operationId must be unique while running, <=128 characters. */
+    run(operationId: string, request: ProcessRequest): Promise<ProcessResult>;
+    cancel(operationId: string): Promise<void>;
+}
 export interface VerstakPluginAPI {
     readonly pluginId: string;
+    /** Feature-detect on older hosts; requires processes/v1 and process.spawn
+     * (or external.openURL for URL requests). Disabled plugins are rejected. */
+    processes?: PluginProcesses;
     navigation: {
         registerHandler(handler: PluginNavigationHandler): Unsubscribe;
         /**
@@ -211,6 +251,9 @@ export interface VerstakPluginAPI {
         read(): Promise<PluginSettings>;
         read<T = unknown>(key: string): Promise<T | undefined>;
         write(key: string, value: unknown): Promise<PluginSettings>;
+        /** Host v0.3.4+: atomically insert/replace by string identity, newest first.
+         * Keeps at most maxRecords (1–10000). Feature-detect on older hosts. */
+        upsertRecord?(key: string, identityField: string, record: Record<string, unknown>, maxRecords: number): Promise<void>;
         writeAll(settings: PluginSettings): Promise<void>;
     };
     storage: {
@@ -220,6 +263,10 @@ export interface VerstakPluginAPI {
         };
     };
     ui: {
+        /** Host built-in Lucide icons, rendered with currentColor. */
+        createIcon?(name: string, size?: number): SVGSVGElement;
+        /** Open one of this plugin's declared views. */
+        openView?(viewId: string): Promise<void>;
         openSettings(panelId?: string): Promise<void>;
     };
     keys: {
@@ -240,6 +287,8 @@ export interface VerstakPluginAPI {
      * `list` and `write` return records without them.
      */
     secrets: {
+        /** Archives the encrypted store intact and locks the session. Requires explicit confirmation and secrets.write. */
+        archiveAndReset(confirmed: boolean): Promise<string>;
         status(): Promise<SecretsStatus>;
         unlock(masterPassword: string): Promise<void>;
         list(): Promise<SecretRecord[]>;
