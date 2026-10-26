@@ -574,6 +574,8 @@ export interface ContributionOpenProvider {
     supports: OpenProviderSupport[];
 }
 export interface ContributionWorkspaceItem {
+    alwaysAvailable?: boolean;
+    order?: number;
     id: string;
     title: string;
     icon?: string;
@@ -606,6 +608,8 @@ export interface OpenResourceContext {
     notesMode?: boolean;
 }
 export interface OpenResourceRequest {
+    /** Opens above the current material without navigating away. */
+    presentation?: 'dialog';
     kind: OpenResourceKind;
     path: string;
     mode?: OpenResourceMode;

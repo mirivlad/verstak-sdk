@@ -76,6 +76,18 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
     const trashPayloads = new Map();
     const cancelledTransfers = new Set();
     const transferProgressListeners = new Set();
+    const secretStore = new Map();
+    let secretsUnlocked = false;
+    let secretsInitialized = true;
+    const secretOrThrow = (secretId) => {
+        if (!secretsUnlocked)
+            throw new Error('secret store is locked');
+        const record = secretStore.get(secretId);
+        if (!record)
+            throw new Error(`secret not found: ${secretId}`);
+        return record;
+    };
+    const withoutValue = ({ value: _value, ...record }) => record;
     const movePath = async (fromRelativePath, toRelativePath, options = {}) => {
         const from = normalizePath(fromRelativePath);
         const to = normalizePath(toRelativePath);
@@ -261,6 +273,16 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
                 settings[key] = value;
                 return { ...settings };
             }),
+            upsertRecord: vi.fn(async (key, identityField, record, maxRecords) => {
+                if (!key.trim() || !identityField.trim() || typeof record?.[identityField] !== 'string' || !record[identityField].trim())
+                    throw new Error('record identity and settings key are required');
+                if (!Number.isInteger(maxRecords) || maxRecords < 1 || maxRecords > 10000)
+                    throw new Error('maxRecords must be between 1 and 10000');
+                const existing = settings[key] ?? [];
+                if (!Array.isArray(existing) || existing.some(value => !value || typeof value !== 'object' || Array.isArray(value)))
+                    throw new Error('setting is not a record array');
+                settings[key] = [{ ...record }, ...existing.filter(value => value[identityField] !== record[identityField])].slice(0, maxRecords);
+            }),
             writeAll: vi.fn(async (nextSettings) => {
                 Object.keys(settings).forEach((key) => delete settings[key]);
                 Object.assign(settings, nextSettings);
@@ -283,6 +305,76 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
                     timestamp: new Date().toISOString(),
                 };
                 (eventHandlers.get('ui.openSettings') || []).slice().forEach((handler) => handler(event));
+            }),
+        },
+        keys: {
+            matches: vi.fn((event, spec) => {
+                if (!event || !spec || !spec.code || event.code !== spec.code)
+                    return false;
+                const ctrl = Boolean(event.ctrlKey);
+                const meta = Boolean(event.metaKey);
+                if (spec.ctrlOrMeta) {
+                    if (!ctrl && !meta)
+                        return false;
+                }
+                else if (Boolean(spec.ctrl) !== ctrl || Boolean(spec.meta) !== meta) {
+                    return false;
+                }
+                return Boolean(spec.shift) === Boolean(event.shiftKey) && Boolean(spec.alt) === Boolean(event.altKey);
+            }),
+        },
+        // Fail closed: the mock cannot emulate host-native review or run programs.
+        processes: {
+            approved: async () => false,
+            review: async () => false,
+            revoke: async () => { },
+            run: async () => { throw new Error('approval_required'); },
+            cancel: async () => { },
+        },
+        notifications: {
+            replace: vi.fn(async (items) => {
+                if (!Array.isArray(items))
+                    throw new Error('notifications.replace requires an array');
+            }),
+            clear: vi.fn(async () => { }),
+        },
+        secrets: {
+            archiveAndReset: vi.fn(async (confirmed) => {
+                if (!confirmed)
+                    throw new Error('secret archive confirmation required');
+                secretStore.clear();
+                secretsUnlocked = false;
+                secretsInitialized = false;
+                return '/mock/vault/.verstak/secrets-archives/test/secrets';
+            }),
+            status: vi.fn(async () => ({ initialized: secretsInitialized, unlocked: secretsUnlocked })),
+            unlock: vi.fn(async (masterPassword) => {
+                if (!masterPassword)
+                    throw new Error('master password is required');
+                secretsUnlocked = true;
+                secretsInitialized = true;
+            }),
+            list: vi.fn(async () => {
+                if (!secretsUnlocked)
+                    throw new Error('secret store is locked');
+                return Array.from(secretStore.values(), withoutValue);
+            }),
+            read: vi.fn(async (secretId) => ({ ...secretOrThrow(secretId) })),
+            write: vi.fn(async (record) => {
+                if (!secretsUnlocked)
+                    throw new Error('secret store is locked');
+                const id = record.id || `secret-${secretStore.size + 1}`;
+                const stored = { ...record, id, updatedAt: new Date().toISOString() };
+                secretStore.set(id, stored);
+                return withoutValue(stored);
+            }),
+            delete: vi.fn(async (secretId) => {
+                secretOrThrow(secretId);
+                secretStore.delete(secretId);
+            }),
+            copyLink: vi.fn(async (secretId) => {
+                const record = secretOrThrow(secretId);
+                return `[${record.title}](verstak-secret://${encodeURIComponent(record.id)})`;
             }),
         },
         capabilities: {
@@ -616,6 +708,11 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options = {}) {
                 const path = normalizePath(relativePath);
                 if (!files.has(path))
                     throw new Error(`not-found: ${path}`);
+            }),
+            openURL: vi.fn(async (url) => {
+                const parsed = new URL(String(url));
+                if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:')
+                    throw new Error('invalid HTTP(S) URL');
             }),
             showInFolder: vi.fn(async (relativePath) => {
                 const path = normalizePath(relativePath);
