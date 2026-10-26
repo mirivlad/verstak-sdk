@@ -265,6 +265,8 @@ export interface VerstakPluginAPI {
     ui: {
         /** Host built-in Lucide icons, rendered with currentColor. */
         createIcon?(name: string, size?: number): SVGSVGElement;
+        /** Open the shared host icon picker; null means cancelled. */
+        pickIcon?(current?: string): Promise<string | null>;
         /** Open one of this plugin's declared views. */
         openView?(viewId: string): Promise<void>;
         openSettings(panelId?: string): Promise<void>;

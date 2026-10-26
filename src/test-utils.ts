@@ -349,6 +349,7 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
       },
     },
     ui: {
+      pickIcon: vi.fn(async (_current?: string): Promise<string | null> => null),
       openSettings: vi.fn(async (panelId?: string) => {
         const event = {
           name: 'ui.openSettings',
