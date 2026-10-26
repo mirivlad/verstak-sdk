@@ -27,6 +27,7 @@
     }
   },
   "permissions": [
+    {"name": "external.openURL", "description": "Open reviewed HTTP(S) URLs with the system handler", "dangerous": true},
     { "name": "vault.read", "description": "Read vault files and metadata", "dangerous": false },
     { "name": "vault.write", "description": "Write vault files and metadata", "dangerous": true },
     { "name": "vault.watch", "description": "Watch vault file changes", "dangerous": false },

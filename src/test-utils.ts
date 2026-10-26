@@ -372,6 +372,14 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
         return Boolean(spec.shift) === Boolean(event.shiftKey) && Boolean(spec.alt) === Boolean(event.altKey);
       }),
     },
+    // Fail closed: the mock cannot emulate host-native review or run programs.
+    processes: {
+      approved: async () => false,
+      review: async () => false,
+      revoke: async () => {},
+      run: async () => { throw new Error('approval_required'); },
+      cancel: async () => {},
+    },
     notifications: {
       replace: vi.fn(async (items: PluginNotificationRequest[]) => {
         if (!Array.isArray(items)) throw new Error('notifications.replace requires an array');
