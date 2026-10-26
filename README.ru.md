@@ -107,3 +107,5 @@ Bundled frontend-плагины являются доверенными и вы�
 
 Copyright © 2026 Verstak contributors. Распространяется на условиях
 [GNU AGPLv3 или новее](LICENSE).
+
+Контракты запуска процессов: `schemas/processes.json`, `ProcessRequest`, `ProcessResult` и optional `api.processes` (`verstak/core/processes/v1`). Используется `process.spawn`, добавлен `external.openURL`. Подтверждение принадлежит ядру; разрешения устройства не синхронизируются. Дополнения UI: `ui.createIcon`, `ui.openView`, `workspaceItems.alwaysAvailable`.

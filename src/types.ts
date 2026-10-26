@@ -694,6 +694,8 @@ export interface ContributionOpenProvider {
 }
 
 export interface ContributionWorkspaceItem {
+  alwaysAvailable?: boolean;
+  order?: number;
   id: string;
   title: string;
   icon?: string;

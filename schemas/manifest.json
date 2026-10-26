@@ -143,6 +143,7 @@
           "network.local",
           "network.remote",
           "process.spawn",
+          "external.openURL",
           "secrets.read",
           "secrets.write",
           "sync.participate",
@@ -658,6 +659,7 @@
     "ContributionWorkspaceItem": {
       "type": "object",
       "properties": {
+        "alwaysAvailable": { "type": "boolean", "default": false, "description": "Show this utility in every Deal, independent of recipe tool restrictions. Plugin disable still removes the tab." },
         "id": {
           "type": "string"
         },

@@ -3,6 +3,9 @@
 export * from './types';
 export { VerstakPluginAPI, createPluginAPI } from './plugin-api';
 export type {
+  ProcessRequest,
+  ProcessResult,
+  PluginProcesses,
   PluginNotificationRequest,
   SecretRecord,
   SecretScope,

@@ -143,3 +143,5 @@ real isolation belongs to a later sidecar/sandbox milestone.
 
 Copyright © 2026 Verstak contributors. Licensed under
 [GNU AGPLv3 or later](LICENSE).
+
+Reviewed process contracts: `schemas/processes.json`, `ProcessRequest`, `ProcessResult` and optional `api.processes` (`verstak/core/processes/v1`). Reuses `process.spawn`, adds `external.openURL`. Native review and approvals belong to the host and never sync. `ui.createIcon`, `ui.openView`, and `workspaceItems.alwaysAvailable` are additive host contracts.

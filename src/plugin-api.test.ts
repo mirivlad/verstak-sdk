@@ -774,3 +774,16 @@ describe('VerstakPluginAPI contract', () => {
     await expect(api.files.openURL('file:///etc/passwd')).rejects.toThrow('HTTP(S)');
   });
 });
+
+// Mock process execution stays closed; only the desktop can grant native approval.
+describe('reviewed process API', () => {
+  test('mock never approves or executes an imported definition', async () => {
+    const api = createMockPluginAPI('test.process');
+    const request = {kind: 'process' as const, executable: 'printf', args: ['%s', 'two words; $(no-shell)'], mode: 'wait' as const};
+    expect(await api.processes!.approved(request)).toBe(false);
+    expect(await api.processes!.review(request)).toBe(false);
+    await expect(api.processes!.run('one', request)).rejects.toThrow('approval_required');
+    expect(capabilitiesSchema.capabilities.some(c => c.name === 'verstak/core/processes/v1')).toBe(true);
+    expect(permissionsSchema.permissions.some(p => p.name === 'external.openURL' && p.dangerous)).toBe(true);
+  });
+});

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Verstak reviewed local process request",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "executable",
+        "args",
+        "mode"
+      ],
+      "properties": {
+        "kind": {
+          "const": "process"
+        },
+        "executable": {
+          "type": "string",
+          "minLength": 1
+        },
+        "args": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "string"
+          }
+        },
+        "cwd": {
+          "type": "string"
+        },
+        "mode": {
+          "enum": [
+            "wait",
+            "detached"
+          ]
+        },
+        "timeoutMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600000,
+          "default": 30000
+        },
+        "maxOutputBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4194304,
+          "default": 1048576
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "url"
+      ],
+      "properties": {
+        "kind": {
+          "const": "url"
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^https?://",
+          "maxLength": 16384
+        }
+      }
+    }
+  ],
+  "type": "object"
+}
