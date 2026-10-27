@@ -782,7 +782,10 @@ describe('reviewed process API', () => {
     const request = {kind: 'process' as const, executable: 'printf', args: ['%s', 'two words; $(no-shell)'], mode: 'wait' as const};
     expect(await api.processes!.approved(request)).toBe(false);
     expect(await api.processes!.review(request)).toBe(false);
-    await expect(api.processes!.run('one', request)).rejects.toThrow('approval_required');
+    expect(await api.processes!.confirm(request)).toBe(false);
+    expect((await api.processes!.run('one', request)).started).toBe(true);
+    await api.storage.local!.write('trust', {one:'digest'});
+    expect(await api.storage.local!.read('trust')).toEqual({one:'digest'});
     expect(capabilitiesSchema.capabilities.some(c => c.name === 'verstak/core/processes/v1')).toBe(true);
     expect(permissionsSchema.permissions.some(p => p.name === 'external.openURL' && p.dangerous)).toBe(true);
   });

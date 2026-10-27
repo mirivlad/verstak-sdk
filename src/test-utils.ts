@@ -125,6 +125,7 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
   const messages = options.messages || {};
   const settings: Record<string, unknown> = {};
   const toolConfigs = new Map(Object.entries(options.toolConfigs || {}).map(([workspaceId, config]) => [workspaceId, { ...config }]));
+  const localData = new Map<string, Record<string, unknown>>();
   const pluginData = new Map<string, Record<string, unknown>>();
   const commands = new Map<string, PluginCommandHandler>();
   const eventHandlers = new Map<string, Array<(event: any) => void>>();
@@ -341,6 +342,10 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
       }),
     },
     storage: {
+      local: {
+        read: vi.fn(async (name: string) => ({ ...(localData.get(name) || {}) })),
+        write: vi.fn(async (name: string, data: Record<string, unknown>) => { localData.set(name, { ...data }); }),
+      },
       data: {
         read: vi.fn(async (name: string) => ({ ...(pluginData.get(name) || {}) })),
         write: vi.fn(async (name: string, data: Record<string, unknown>) => {
@@ -375,10 +380,11 @@ export function createMockPluginAPI(pluginId = 'test.plugin', options: MockPlugi
     },
     // Fail closed: the mock cannot emulate host-native review or run programs.
     processes: {
+      confirm: async () => false,
       approved: async () => false,
       review: async () => false,
       revoke: async () => {},
-      run: async () => { throw new Error('approval_required'); },
+      run: async () => ({started:true,exitCode:0,stdout:'',stderr:'',timedOut:false,cancelled:false,outputLimited:false}),
       cancel: async () => {},
     },
     notifications: {
