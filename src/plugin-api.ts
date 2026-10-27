@@ -285,11 +285,15 @@ export interface ProcessResult {
 }
 
 export interface PluginProcesses {
+  /** Optional host confirmation. It grants no plugin permissions. */
+  confirm(request: ProcessRequest): Promise<boolean>;
+  /** @deprecated Legacy request reviews; Actions trust is plugin-owned. */
   approved(request: ProcessRequest): Promise<boolean>;
   /** Shows the exact normalized request. No is the default button. */
   review(request: ProcessRequest): Promise<boolean>;
+  /** @deprecated Legacy review store; not an execution permission. */
   revoke(request: ProcessRequest): Promise<void>;
-  /** Rejects approval_required; it NEVER opens a review dialog itself.
+  /** Requires current plugin permissions/capability; never opens a dialog.
    * operationId must be unique while running, <=128 characters. */
   run(operationId: string, request: ProcessRequest): Promise<ProcessResult>;
   cancel(operationId: string): Promise<void>;
@@ -329,6 +333,12 @@ export interface VerstakPluginAPI {
   };
 
   storage: {
+    /** Device-local, vault/plugin-scoped JSON outside the vault. Never synced
+     * or included in imports/exports. Requires storage.namespace; not a secret store. */
+    local?: {
+      read(name: string): Promise<PluginDataJSON>;
+      write(name: string, data: PluginDataJSON): Promise<void>;
+    };
     data: {
       read(name: string): Promise<PluginDataJSON>;
       write(name: string, data: PluginDataJSON): Promise<void>;

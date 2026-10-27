@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Verstak reviewed local process request",
+  "title": "Verstak local process request",
   "oneOf": [
     {
       "type": "object",

@@ -28,7 +28,7 @@
   },
   "capabilities": [
     { "name": "actions.launcher", "description": "User-defined application, script and URL launcher", "status": "draft" },
-    {"name": "verstak/core/processes/v1", "description": "Device-reviewed process execution, cancellation and HTTP(S) handlers", "status": "draft"},
+    {"name": "verstak/core/processes/v1", "description": "Permission-checked process execution, optional confirmation, cancellation and HTTP(S) handlers", "status": "draft"},
     { "name": "verstak/core/plugin-manager/v1", "description": "Core plugin discovery and lifecycle management", "status": "draft" },
     { "name": "verstak/core/capability-registry/v1", "description": "Core capability registry access", "status": "draft" },
     { "name": "verstak/core/contribution-registry/v1", "description": "Core plugin contribution registry", "status": "draft" },
